@@ -4,9 +4,25 @@ export default function ExistingPlans() {
   const [plans, setPlans] = useState([]);
 
   useEffect(() => {
-    const savedPlans = JSON.parse(localStorage.getItem("emiPlans")) || [];
+  const savedPlans = JSON.parse(localStorage.getItem("emiPlans")) || [];
+
+  // If no plans are saved, add a default sample
+  if (savedPlans.length === 0) {
+    const samplePlan = {
+      id: Date.now(),
+      title: "Sample Jewel Plan",
+      totalAmount: 12000,
+      monthlyEmi: 1000,
+      months: 12,
+      startDate: "01/07/2025",
+      paid: [],
+    };
+    localStorage.setItem("emiPlans", JSON.stringify([samplePlan]));
+    setPlans([samplePlan]);
+  } else {
     setPlans(savedPlans);
-  }, []);
+  }
+}, []);
 
   const markAsPaid = (index) => {
     const updatedPlans = [...plans];
