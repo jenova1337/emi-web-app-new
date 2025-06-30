@@ -9,7 +9,7 @@ export default function App() {
     <div
       style={{
         minHeight: "100vh",
-        backgroundImage: `url(${require('./assets/emi-login-bg.jpg')})`,
+        backgroundImage: `url(${require('./assets/emi-login-bg.jpeg')})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         display: "flex",
