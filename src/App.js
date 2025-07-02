@@ -4,6 +4,7 @@ import AddPlan from "./AddPlan";
 import ExistingPlans from "./ExistingPlans";
 import Profile from "./Profile";
 import Login from "./Login";
+import SummaryDashboard from "./SummaryDashboard"; // ✅ Add this
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -33,13 +34,12 @@ const App = () => {
         return (
           <div>
             <Profile goBack={() => setView("dashboard")} />
-            <button onClick={handleLogout} style={styles.logoutBtn}>
-              🚪 Logout
-            </button>
+            <button onClick={handleLogout} style={styles.logoutBtn}>🚪 Logout</button>
           </div>
         );
+      case "summary":
+        return <SummaryDashboard goBack={() => setView("dashboard")} />; // ✅ Summary view
       default:
-        // ✅ Pass onLogout to Dashboard here
         return <Dashboard onNavigate={setView} onLogout={handleLogout} />;
     }
   };

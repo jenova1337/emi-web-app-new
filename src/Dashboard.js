@@ -21,10 +21,12 @@ const Dashboard = ({ onNavigate, onLogout }) => {
         <small>View or edit profile details.</small>
       </div>
 
-      {/* ✅ This is what shows the logout button */}
-      <button onClick={onLogout} style={styles.logoutBtn}>
-        🚪 Logout
-      </button>
+      <div style={styles.card} onClick={() => onNavigate("summary")}>
+        📊 <strong>Summary</strong><br />
+        <small>View EMI summary and chart.</small>
+      </div>
+
+      <button onClick={onLogout} style={styles.logoutBtn}>🚪 Logout</button>
     </div>
   );
 };
