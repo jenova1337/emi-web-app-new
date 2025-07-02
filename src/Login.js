@@ -2,25 +2,47 @@ import React, { useState } from "react";
 
 const Login = ({ onLogin }) => {
   const [isSignup, setIsSignup] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({
+    name: "",
+    age: "",
+    gender: "",
+    income: "",
+    familyIncome: "",
+    mobile: "",
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleAction = () => {
     const users = JSON.parse(localStorage.getItem("users")) || [];
 
     if (isSignup) {
-      if (users.find((u) => u.email === email)) {
+      if (users.find((u) => u.email === form.email)) {
         alert("User already exists!");
         return;
       }
-      users.push({ email, password });
+
+      if (
+        !form.name || !form.age || !form.gender || !form.income ||
+        !form.familyIncome || !form.mobile || !form.email || !form.password
+      ) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      users.push(form);
       localStorage.setItem("users", JSON.stringify(users));
       alert("Signup successful! Please log in.");
       setIsSignup(false);
+      setForm({ name: "", age: "", gender: "", income: "", familyIncome: "", mobile: "", email: "", password: "" });
     } else {
-      const found = users.find((u) => u.email === email && u.password === password);
+      const found = users.find((u) => u.email === form.email && u.password === form.password);
       if (found) {
-        localStorage.setItem("loggedInUser", email);
+        localStorage.setItem("loggedInUser", form.email);
         onLogin();
       } else {
         alert("Invalid credentials!");
@@ -28,25 +50,34 @@ const Login = ({ onLogin }) => {
     }
   };
 
+  const renderInput = (label, name, type = "text") => (
+    <input
+      type={type}
+      placeholder={label}
+      name={name}
+      value={form[name]}
+      onChange={handleChange}
+      style={styles.input}
+    />
+  );
+
   return (
     <div style={styles.container}>
       <h2>{isSignup ? "Sign Up" : "Login"}</h2>
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={styles.input}
-      /><br />
+      {isSignup && (
+        <>
+          {renderInput("Full Name", "name")}
+          {renderInput("Age", "age", "number")}
+          {renderInput("Gender", "gender")}
+          {renderInput("Income", "income", "number")}
+          {renderInput("Family Income", "familyIncome", "number")}
+          {renderInput("Mobile Number", "mobile")}
+        </>
+      )}
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={styles.input}
-      /><br />
+      {renderInput("Email", "email", "email")}
+      {renderInput("Password", "password", "password")}
 
       <button onClick={handleAction} style={styles.button}>
         {isSignup ? "Sign Up" : "Login"}
@@ -54,10 +85,7 @@ const Login = ({ onLogin }) => {
 
       <p style={{ marginTop: "1rem" }}>
         {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
-        <span
-          onClick={() => setIsSignup(!isSignup)}
-          style={{ color: "#007bff", cursor: "pointer", textDecoration: "underline" }}
-        >
+        <span onClick={() => setIsSignup(!isSignup)} style={styles.toggleLink}>
           {isSignup ? "Login" : "Sign Up"}
         </span>
       </p>
@@ -68,12 +96,12 @@ const Login = ({ onLogin }) => {
 const styles = {
   container: {
     textAlign: "center",
-    marginTop: "100px",
+    marginTop: "80px",
   },
   input: {
     padding: "10px",
     margin: "10px",
-    width: "250px",
+    width: "260px",
   },
   button: {
     padding: "10px 20px",
@@ -82,6 +110,11 @@ const styles = {
     border: "none",
     borderRadius: "4px",
     cursor: "pointer",
+  },
+  toggleLink: {
+    color: "#007bff",
+    cursor: "pointer",
+    textDecoration: "underline",
   },
 };
 
