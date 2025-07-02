@@ -37,6 +37,7 @@ const App = () => {
           </div>
         );
       default:
+        // ✅ Pass onLogout to Dashboard here
         return <Dashboard onNavigate={setView} onLogout={handleLogout} />;
     }
   };
