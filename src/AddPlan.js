@@ -9,6 +9,11 @@ const AddPlan = ({ goBack }) => {
   const [date, setDate] = useState("");
 
   const handleAdd = () => {
+    if (!title || !amount || !monthly || !months || !date) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
     const newPlan = {
       id: Date.now(),
       title,
@@ -16,7 +21,7 @@ const AddPlan = ({ goBack }) => {
       monthlyEmi: parseFloat(monthly),
       months: parseInt(months),
       startDate: date,
-      paid: [],
+      payments: [], // ✅ New structure for fixed & excess payments
     };
 
     const existing = getPlans();
@@ -36,16 +41,17 @@ const AddPlan = ({ goBack }) => {
       <h3>➕ Add New EMI Plan</h3>
 
       <input
-        placeholder="Title"
+        placeholder="Plan Title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         style={styles.input}
       /><br />
 
       <input
-        placeholder="Total Amount"
+        placeholder="Total Loan Amount"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
+        type="number"
         style={styles.input}
       /><br />
 
@@ -53,13 +59,15 @@ const AddPlan = ({ goBack }) => {
         placeholder="Monthly EMI"
         value={monthly}
         onChange={(e) => setMonthly(e.target.value)}
+        type="number"
         style={styles.input}
       /><br />
 
       <input
-        placeholder="Months"
+        placeholder="Total Months"
         value={months}
         onChange={(e) => setMonths(e.target.value)}
+        type="number"
         style={styles.input}
       /><br />
 
@@ -70,9 +78,9 @@ const AddPlan = ({ goBack }) => {
         style={styles.input}
       /><br />
 
-      <button onClick={handleAdd} style={styles.button}>✅ Add Plan</button>
+      <button onClick={handleAdd} style={styles.addBtn}>✅ Add Plan</button>
       <br /><br />
-      <button onClick={goBack} style={styles.backButton}>🔙 Back to Dashboard</button>
+      <button onClick={goBack} style={styles.backBtn}>🔙 Back to Dashboard</button>
     </div>
   );
 };
@@ -83,21 +91,22 @@ const styles = {
     fontFamily: "Arial, sans-serif",
   },
   input: {
-    padding: "0.5rem",
-    marginBottom: "0.7rem",
-    width: "100%",
-    maxWidth: "400px",
+    padding: "10px",
+    margin: "8px",
+    width: "260px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
   },
-  button: {
-    padding: "0.6rem 1rem",
+  addBtn: {
+    padding: "10px 20px",
     backgroundColor: "#28a745",
     color: "white",
     border: "none",
     borderRadius: "5px",
     cursor: "pointer",
   },
-  backButton: {
-    padding: "0.6rem 1rem",
+  backBtn: {
+    padding: "10px 20px",
     backgroundColor: "#007bff",
     color: "white",
     border: "none",
