@@ -12,8 +12,14 @@ const Login = ({ onLogin }) => {
   const [password, setPassword] = useState("");
 
   const resetFields = () => {
-    setName(""); setAge(""); setGender(""); setIncome("");
-    setFamilyIncome(""); setMobile(""); setEmail(""); setPassword("");
+    setName("");
+    setAge("");
+    setGender("");
+    setIncome("");
+    setFamilyIncome("");
+    setMobile("");
+    setEmail("");
+    setPassword("");
   };
 
   const handleSignup = () => {
@@ -27,12 +33,22 @@ const Login = ({ onLogin }) => {
       return;
     }
 
-    if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       alert("Please enter a valid email address.");
       return;
     }
 
-    const user = { name, age, gender, income, familyIncome, mobile, email, password };
+    const user = {
+      name,
+      age,
+      gender,
+      income,
+      familyIncome,
+      mobile,
+      email,
+      password,
+    };
+
     localStorage.setItem("user_" + email, JSON.stringify(user));
     localStorage.setItem("loggedInUser", email);
     alert("Signup successful!");
@@ -42,7 +58,7 @@ const Login = ({ onLogin }) => {
   const handleLogin = () => {
     const user = JSON.parse(localStorage.getItem("user_" + email));
     if (!user) {
-      alert("User not found. Please sign up.");
+      alert("User not found. Please sign up first.");
       return;
     }
 
@@ -61,17 +77,50 @@ const Login = ({ onLogin }) => {
 
       {isSignup && (
         <>
-          <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input placeholder="Age" value={age} onChange={(e) => setAge(e.target.value)} />
-          <input placeholder="Gender" value={gender} onChange={(e) => setGender(e.target.value)} />
-          <input placeholder="Income" value={income} onChange={(e) => setIncome(e.target.value)} />
-          <input placeholder="Family Income" value={familyIncome} onChange={(e) => setFamilyIncome(e.target.value)} />
-          <input placeholder="Mobile Number" value={mobile} onChange={(e) => setMobile(e.target.value)} />
+          <input
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <input
+            placeholder="Age"
+            value={age}
+            onChange={(e) => setAge(e.target.value)}
+          />
+          <input
+            placeholder="Gender"
+            value={gender}
+            onChange={(e) => setGender(e.target.value)}
+          />
+          <input
+            placeholder="Income"
+            value={income}
+            onChange={(e) => setIncome(e.target.value)}
+          />
+          <input
+            placeholder="Family Income"
+            value={familyIncome}
+            onChange={(e) => setFamilyIncome(e.target.value)}
+          />
+          <input
+            placeholder="Mobile Number"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+          />
         </>
       )}
 
-      <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <input
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
+        placeholder="Password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
 
       <button onClick={isSignup ? handleSignup : handleLogin}>
         {isSignup ? "Sign Up" : "Login"}
