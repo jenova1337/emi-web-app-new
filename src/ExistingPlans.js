@@ -56,6 +56,13 @@ export default function ExistingPlans({ goBack }) {
     addPayment(index, amount, "Excess", date);
   };
 
+  const deletePlan = (id) => {
+    if (window.confirm("Are you sure you want to delete this EMI plan?")) {
+      const updated = plans.filter((plan) => plan.id !== id);
+      savePlans(updated);
+    }
+  };
+
   const getTotalPaid = (payments) =>
     payments.reduce((sum, p) => sum + p.amount, 0);
 
@@ -127,6 +134,11 @@ export default function ExistingPlans({ goBack }) {
                 )}
               </tbody>
             </table>
+
+            {/* 🗑 Delete Plan Button */}
+            <button onClick={() => deletePlan(plan.id)} style={styles.deleteBtn}>
+              🗑 Delete Plan
+            </button>
           </div>
         ))
       )}
@@ -181,5 +193,14 @@ const styles = {
     color: "white",
     borderRadius: "5px",
     fontSize: "0.9rem",
+  },
+  deleteBtn: {
+    marginTop: "1rem",
+    backgroundColor: "#dc3545",
+    color: "white",
+    padding: "8px 12px",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
 };
