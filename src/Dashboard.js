@@ -23,7 +23,7 @@ const Dashboard = ({ onNavigate, onLogout }) => {
 
       <div style={styles.card} onClick={() => onNavigate("summary")}>
         📊 <strong>Summary</strong><br />
-        <small>View EMI summary and chart.</small>
+        <small>EMI totals and chart view.</small>
       </div>
 
       <button onClick={onLogout} style={styles.logoutBtn}>🚪 Logout</button>

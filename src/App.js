@@ -4,7 +4,7 @@ import AddPlan from "./AddPlan";
 import ExistingPlans from "./ExistingPlans";
 import Profile from "./Profile";
 import Login from "./Login";
-import SummaryDashboard from "./SummaryDashboard"; // ✅ Add this
+import SummaryDashboard from "./SummaryDashboard";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -38,7 +38,7 @@ const App = () => {
           </div>
         );
       case "summary":
-        return <SummaryDashboard goBack={() => setView("dashboard")} />; // ✅ Summary view
+        return <SummaryDashboard goBack={() => setView("dashboard")} />;
       default:
         return <Dashboard onNavigate={setView} onLogout={handleLogout} />;
     }
