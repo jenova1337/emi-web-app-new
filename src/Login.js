@@ -17,7 +17,42 @@ const Login = ({ onLogin }) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const validateInputs = () => {
+    if (isSignup) {
+      const { name, age, gender, income, familyIncome, mobile, email, password } = form;
+      if (!name || !age || !gender || !income || !familyIncome || !mobile || !email || !password) {
+        alert("Please fill in all fields.");
+        return false;
+      }
+
+      if (!/^\d{10}$/.test(mobile)) {
+        alert("Mobile number must be exactly 10 digits.");
+        return false;
+      }
+
+      if (age <= 0 || age > 120) {
+        alert("Enter a valid age.");
+        return false;
+      }
+
+      if (income < 0 || familyIncome < 0) {
+        alert("Income values must be positive.");
+        return false;
+      }
+    } else {
+      const { email, password } = form;
+      if (!email || !password) {
+        alert("Email and password are required.");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleAction = () => {
+    if (!validateInputs()) return;
+
     const users = JSON.parse(localStorage.getItem("users")) || [];
 
     if (isSignup) {
@@ -25,15 +60,6 @@ const Login = ({ onLogin }) => {
         alert("User already exists!");
         return;
       }
-
-      if (
-        !form.name || !form.age || !form.gender || !form.income ||
-        !form.familyIncome || !form.mobile || !form.email || !form.password
-      ) {
-        alert("Please fill in all fields.");
-        return;
-      }
-
       users.push(form);
       localStorage.setItem("users", JSON.stringify(users));
       alert("Signup successful! Please log in.");
@@ -85,7 +111,10 @@ const Login = ({ onLogin }) => {
 
       <p style={{ marginTop: "1rem" }}>
         {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
-        <span onClick={() => setIsSignup(!isSignup)} style={styles.toggleLink}>
+        <span
+          onClick={() => setIsSignup(!isSignup)}
+          style={styles.toggleLink}
+        >
           {isSignup ? "Login" : "Sign Up"}
         </span>
       </p>
@@ -97,11 +126,14 @@ const styles = {
   container: {
     textAlign: "center",
     marginTop: "80px",
+    fontFamily: "Arial, sans-serif",
   },
   input: {
     padding: "10px",
-    margin: "10px",
+    margin: "8px",
     width: "260px",
+    borderRadius: "4px",
+    border: "1px solid #ccc",
   },
   button: {
     padding: "10px 20px",
@@ -110,6 +142,7 @@ const styles = {
     border: "none",
     borderRadius: "4px",
     cursor: "pointer",
+    marginTop: "10px",
   },
   toggleLink: {
     color: "#007bff",
