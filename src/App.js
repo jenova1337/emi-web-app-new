@@ -1,33 +1,26 @@
 import React, { useState } from "react";
 import Dashboard from "./Dashboard";
-import Login from "./Login";
+import AddPlan from "./AddPlan";
+import ExistingPlans from "./ExistingPlans";
+import Profile from "./Profile";
 
-export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
+const App = () => {
+  const [view, setView] = useState("dashboard");
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundImage: `url(${require('./assets/emi-login-bg.jpeg')})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "rgba(255, 255, 255, 0.85)",
-          padding: "2rem",
-          borderRadius: "12px",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-          width: "320px",
-        }}
-      >
-        {loggedIn ? <Dashboard /> : <Login onLogin={() => setLoggedIn(true)} />}
-      </div>
-    </div>
-  );
-}
+  const renderView = () => {
+    switch (view) {
+      case "add":
+        return <AddPlan goBack={() => setView("dashboard")} />;
+      case "existing":
+        return <ExistingPlans goBack={() => setView("dashboard")} />;
+      case "profile":
+        return <Profile goBack={() => setView("dashboard")} />;
+      default:
+        return <Dashboard onNavigate={setView} />;
+    }
+  };
+
+  return <div>{renderView()}</div>;
+};
+
+export default App;
