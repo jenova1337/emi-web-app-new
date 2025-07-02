@@ -2,90 +2,58 @@ import React, { useState } from "react";
 
 const Login = ({ onLogin }) => {
   const [isSignup, setIsSignup] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    age: "",
-    gender: "",
-    income: "",
-    familyIncome: "",
-    mobile: "",
-    email: "",
-    password: "",
-  });
+  const [name, setName] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+  const [income, setIncome] = useState("");
+  const [familyIncome, setFamilyIncome] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const resetFields = () => {
+    setName(""); setAge(""); setGender(""); setIncome("");
+    setFamilyIncome(""); setMobile(""); setEmail(""); setPassword("");
   };
 
-  const validateInputs = () => {
-    if (isSignup) {
-      const { name, age, gender, income, familyIncome, mobile, email, password } = form;
-      if (!name || !age || !gender || !income || !familyIncome || !mobile || !email || !password) {
-        alert("Please fill in all fields.");
-        return false;
-      }
-
-      if (!/^\d{10}$/.test(mobile)) {
-        alert("Mobile number must be exactly 10 digits.");
-        return false;
-      }
-
-      if (age <= 0 || age > 120) {
-        alert("Enter a valid age.");
-        return false;
-      }
-
-      if (income < 0 || familyIncome < 0) {
-        alert("Income values must be positive.");
-        return false;
-      }
-    } else {
-      const { email, password } = form;
-      if (!email || !password) {
-        alert("Email and password are required.");
-        return false;
-      }
+  const handleSignup = () => {
+    if (!name || !age || !gender || !income || !familyIncome || !mobile || !email || !password) {
+      alert("Please fill all fields.");
+      return;
     }
 
-    return true;
-  };
-
-  const handleAction = () => {
-    if (!validateInputs()) return;
-
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-
-    if (isSignup) {
-      if (users.find((u) => u.email === form.email)) {
-        alert("User already exists!");
-        return;
-      }
-      users.push(form);
-      localStorage.setItem("users", JSON.stringify(users));
-      alert("Signup successful! Please log in.");
-      setIsSignup(false);
-      setForm({ name: "", age: "", gender: "", income: "", familyIncome: "", mobile: "", email: "", password: "" });
-    } else {
-      const found = users.find((u) => u.email === form.email && u.password === form.password);
-      if (found) {
-        localStorage.setItem("loggedInUser", form.email);
-        onLogin();
-      } else {
-        alert("Invalid credentials!");
-      }
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      alert("Please enter a valid 10-digit mobile number.");
+      return;
     }
+
+    if (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
+    const user = { name, age, gender, income, familyIncome, mobile, email, password };
+    localStorage.setItem("user_" + email, JSON.stringify(user));
+    localStorage.setItem("loggedInUser", email);
+    alert("Signup successful!");
+    onLogin();
   };
 
-  const renderInput = (label, name, type = "text") => (
-    <input
-      type={type}
-      placeholder={label}
-      name={name}
-      value={form[name]}
-      onChange={handleChange}
-      style={styles.input}
-    />
-  );
+  const handleLogin = () => {
+    const user = JSON.parse(localStorage.getItem("user_" + email));
+    if (!user) {
+      alert("User not found. Please sign up.");
+      return;
+    }
+
+    if (user.password !== password) {
+      alert("Incorrect password.");
+      return;
+    }
+
+    localStorage.setItem("loggedInUser", email);
+    onLogin();
+  };
 
   return (
     <div style={styles.container}>
@@ -93,29 +61,32 @@ const Login = ({ onLogin }) => {
 
       {isSignup && (
         <>
-          {renderInput("Full Name", "name")}
-          {renderInput("Age", "age", "number")}
-          {renderInput("Gender", "gender")}
-          {renderInput("Income", "income", "number")}
-          {renderInput("Family Income", "familyIncome", "number")}
-          {renderInput("Mobile Number", "mobile")}
+          <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+          <input placeholder="Age" value={age} onChange={(e) => setAge(e.target.value)} />
+          <input placeholder="Gender" value={gender} onChange={(e) => setGender(e.target.value)} />
+          <input placeholder="Income" value={income} onChange={(e) => setIncome(e.target.value)} />
+          <input placeholder="Family Income" value={familyIncome} onChange={(e) => setFamilyIncome(e.target.value)} />
+          <input placeholder="Mobile Number" value={mobile} onChange={(e) => setMobile(e.target.value)} />
         </>
       )}
 
-      {renderInput("Email", "email", "email")}
-      {renderInput("Password", "password", "password")}
+      <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
-      <button onClick={handleAction} style={styles.button}>
+      <button onClick={isSignup ? handleSignup : handleLogin}>
         {isSignup ? "Sign Up" : "Login"}
       </button>
 
       <p style={{ marginTop: "1rem" }}>
         {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
         <span
-          onClick={() => setIsSignup(!isSignup)}
-          style={styles.toggleLink}
+          onClick={() => {
+            setIsSignup(!isSignup);
+            resetFields();
+          }}
+          style={{ color: "blue", cursor: "pointer" }}
         >
-          {isSignup ? "Login" : "Sign Up"}
+          {isSignup ? "Login here" : "Sign up here"}
         </span>
       </p>
     </div>
@@ -124,30 +95,13 @@ const Login = ({ onLogin }) => {
 
 const styles = {
   container: {
-    textAlign: "center",
-    marginTop: "80px",
-    fontFamily: "Arial, sans-serif",
-  },
-  input: {
-    padding: "10px",
-    margin: "8px",
-    width: "260px",
-    borderRadius: "4px",
+    maxWidth: "400px",
+    margin: "2rem auto",
+    padding: "2rem",
     border: "1px solid #ccc",
-  },
-  button: {
-    padding: "10px 20px",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    marginTop: "10px",
-  },
-  toggleLink: {
-    color: "#007bff",
-    cursor: "pointer",
-    textDecoration: "underline",
+    borderRadius: "10px",
+    backgroundColor: "#f9f9f9",
+    textAlign: "center",
   },
 };
 
