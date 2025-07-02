@@ -33,7 +33,9 @@ const App = () => {
         return (
           <div>
             <Profile goBack={() => setView("dashboard")} />
-            <button onClick={handleLogout} style={styles.logoutBtn}>🚪 Logout</button>
+            <button onClick={handleLogout} style={styles.logoutBtn}>
+              🚪 Logout
+            </button>
           </div>
         );
       default:
