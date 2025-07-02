@@ -4,8 +4,23 @@ export default function ExistingPlans({ goBack }) {
   const [plans, setPlans] = useState([]);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("emiPlans")) || [];
+    let saved = JSON.parse(localStorage.getItem("emiPlans")) || [];
+
+    // ✅ Fallback: Convert old 'paid' array to 'payments'
+    saved = saved.map((plan) => {
+      if (!plan.payments && Array.isArray(plan.paid)) {
+        plan.payments = plan.paid.map((date) => ({
+          date: date,
+          amount: plan.monthlyEmi,
+          type: "Fixed",
+        }));
+        delete plan.paid;
+      }
+      return plan;
+    });
+
     setPlans(saved);
+    localStorage.setItem("emiPlans", JSON.stringify(saved)); // Save converted format
   }, []);
 
   const savePlans = (updated) => {
@@ -52,65 +67,69 @@ export default function ExistingPlans({ goBack }) {
       <h2>📂 Existing EMI Plans</h2>
       <button onClick={goBack} style={styles.backBtn}>🔙 Back to Dashboard</button>
 
-      {plans.map((plan, index) => (
-        <div key={plan.id} style={styles.card}>
-          <h3>{plan.title}</h3>
-          <p>💰 Total Amount: ₹{plan.totalAmount}</p>
-          <p>📅 Monthly EMI: ₹{plan.monthlyEmi}</p>
-          <p>📆 Start Date: {plan.startDate}</p>
-          <p>✅ Total Paid: ₹{getTotalPaid(plan.payments)}</p>
-          <p>📉 Remaining: ₹{getBalance(plan)}</p>
+      {plans.length === 0 ? (
+        <p>No EMI plans found.</p>
+      ) : (
+        plans.map((plan, index) => (
+          <div key={plan.id} style={styles.card}>
+            <h3>{plan.title}</h3>
+            <p>💰 Total Amount: ₹{plan.totalAmount}</p>
+            <p>📅 Monthly EMI: ₹{plan.monthlyEmi}</p>
+            <p>📆 Start Date: {plan.startDate}</p>
+            <p>✅ Total Paid: ₹{getTotalPaid(plan.payments)}</p>
+            <p>📉 Remaining: ₹{getBalance(plan)}</p>
 
-          <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
-            ✅ Pay EMI
-          </button>
-          <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
-            ➕ Add Excess Payment
-          </button>
+            <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
+              ✅ Pay EMI
+            </button>
+            <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
+              ➕ Add Excess Payment
+            </button>
 
-          <h4>📋 Payment History</h4>
-          <table border="1" cellPadding="5">
-            <thead>
-              <tr>
-                <th>S.No</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Type</th>
-                <th>Total Paid</th>
-                <th>To Be Paid</th>
-              </tr>
-            </thead>
-            <tbody>
-              {plan.payments.map((pay, idx) => {
-                const runningTotal = plan.payments
-                  .slice(0, idx + 1)
-                  .reduce((sum, p) => sum + p.amount, 0);
-                const balance = plan.totalAmount - runningTotal;
-
-                return (
-                  <tr key={idx}>
-                    <td>{idx + 1}</td>
-                    <td>{pay.date}</td>
-                    <td>₹{pay.amount}</td>
-                    <td>
-                      <span style={pay.type === "Fixed" ? styles.fixedBadge : styles.excessBadge}>
-                        {pay.type}
-                      </span>
-                    </td>
-                    <td>₹{runningTotal}</td>
-                    <td>₹{balance}</td>
-                  </tr>
-                );
-              })}
-              {plan.payments.length === 0 && (
+            <h4>📋 Payment History</h4>
+            <table border="1" cellPadding="5">
+              <thead>
                 <tr>
-                  <td colSpan="6" align="center">No payments yet</td>
+                  <th>S.No</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Type</th>
+                  <th>Total Paid</th>
+                  <th>To Be Paid</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      ))}
+              </thead>
+              <tbody>
+                {plan.payments.map((pay, idx) => {
+                  const runningTotal = plan.payments
+                    .slice(0, idx + 1)
+                    .reduce((sum, p) => sum + p.amount, 0);
+                  const balance = plan.totalAmount - runningTotal;
+
+                  return (
+                    <tr key={idx}>
+                      <td>{idx + 1}</td>
+                      <td>{pay.date}</td>
+                      <td>₹{pay.amount}</td>
+                      <td>
+                        <span style={pay.type === "Fixed" ? styles.fixedBadge : styles.excessBadge}>
+                          {pay.type}
+                        </span>
+                      </td>
+                      <td>₹{runningTotal}</td>
+                      <td>₹{balance}</td>
+                    </tr>
+                  );
+                })}
+                {plan.payments.length === 0 && (
+                  <tr>
+                    <td colSpan="6" align="center">No payments yet</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ))
+      )}
     </div>
   );
 }
