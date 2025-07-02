@@ -1,6 +1,6 @@
 import React from "react";
 
-const Dashboard = ({ onNavigate }) => {
+const Dashboard = ({ onNavigate, onLogout }) => {
   return (
     <div style={styles.container}>
       <h2>🎉 Welcome to EMI Tracker Dashboard</h2>
@@ -20,6 +20,11 @@ const Dashboard = ({ onNavigate }) => {
         🙍 <strong>Profile</strong><br />
         <small>View or edit profile details.</small>
       </div>
+
+      {/* ✅ This is what shows the logout button */}
+      <button onClick={onLogout} style={styles.logoutBtn}>
+        🚪 Logout
+      </button>
     </div>
   );
 };
@@ -38,6 +43,16 @@ const styles = {
     cursor: "pointer",
     maxWidth: "400px",
     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+  },
+  logoutBtn: {
+    marginTop: "2rem",
+    padding: "10px 20px",
+    fontSize: "16px",
+    backgroundColor: "#dc3545",
+    color: "#fff",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
   },
 };
 
