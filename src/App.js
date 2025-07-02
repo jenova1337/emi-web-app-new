@@ -37,7 +37,7 @@ const App = () => {
           </div>
         );
       default:
-        return <Dashboard onNavigate={setView} />;
+        return <Dashboard onNavigate={setView} onLogout={handleLogout} />;
     }
   };
 
