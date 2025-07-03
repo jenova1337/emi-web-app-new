@@ -29,6 +29,12 @@ export default function ExistingPlans({ goBack }) {
     setPlans(updated);
   };
 
+  const getTotalPaid = (payments) =>
+    payments.reduce((sum, p) => sum + p.amount, 0);
+
+  const getBalance = (plan) =>
+    Math.max(0, plan.totalAmount - getTotalPaid(plan.payments));
+
   const addPayment = (planIndex, amount, type, customDate) => {
     const updatedPlans = [...plans];
     const plan = updatedPlans[planIndex];
@@ -45,9 +51,14 @@ export default function ExistingPlans({ goBack }) {
     const updatedPlans = [...plans];
     const plan = updatedPlans[index];
 
+    const totalPaid = getTotalPaid(plan.payments);
+    if (totalPaid >= plan.totalAmount) {
+      alert("🎉 This EMI plan is fully paid. No further Fixed payments allowed.");
+      return;
+    }
+
     const inputDate = prompt("Enter date (dd/mm/yyyy) or leave blank for today:");
     const dateStr = inputDate || new Date().toLocaleDateString("en-GB");
-
     const [day, month, year] = dateStr.split("/").map(Number);
 
     const alreadyPaidThisMonth = plan.payments.some((p) => {
@@ -55,18 +66,19 @@ export default function ExistingPlans({ goBack }) {
       return p.type === "Fixed" && m === month && y === year;
     });
 
-    const payment = {
+    if (alreadyPaidThisMonth) {
+      alert("⚠️ EMI already paid for this month. Use 'Add Excess Payment' for additional payment.");
+      return;
+    }
+
+    plan.payments.push({
       date: dateStr,
       amount: plan.monthlyEmi,
-      type: alreadyPaidThisMonth ? "Excess" : "Fixed",
-    };
+      type: "Fixed",
+    });
 
-    plan.payments.push(payment);
     savePlans(updatedPlans);
-
-    if (alreadyPaidThisMonth) {
-      alert("Already paid EMI for this month. This has been added as Excess Payment.");
-    }
+    alert("✅ EMI paid successfully for this month.");
   };
 
   const handleExcessPayment = (index) => {
@@ -86,29 +98,6 @@ export default function ExistingPlans({ goBack }) {
     }
   };
 
-  const getTotalPaid = (payments) =>
-    payments.reduce((sum, p) => sum + p.amount, 0);
-
-  const getBalance = (plan) =>
-    plan.totalAmount - getTotalPaid(plan.payments);
-
-  const hasPaidThisMonth = (plan) => {
-    const today = new Date();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear();
-    return plan.payments.some((p) => {
-      const [d, m, y] = p.date.split("/").map(Number);
-      return p.type === "Fixed" && m === month && y === year;
-    });
-  };
-
-  const getNextDueDate = (plan) => {
-    const start = new Date(plan.startDate.split("/").reverse().join("-"));
-    const nextMonth = start.getMonth() + plan.payments.filter(p => p.type === "Fixed").length;
-    const nextDue = new Date(start.setMonth(nextMonth));
-    return nextDue.toLocaleDateString("en-GB");
-  };
-
   return (
     <div style={{ padding: "1rem" }}>
       <h2>📂 Existing EMI Plans</h2>
@@ -123,16 +112,8 @@ export default function ExistingPlans({ goBack }) {
             <p>💰 Total Amount: ₹{plan.totalAmount}</p>
             <p>📅 Monthly EMI: ₹{plan.monthlyEmi}</p>
             <p>📆 Start Date: {plan.startDate}</p>
-            <p>📆 Next Due: {getNextDueDate(plan)}</p>
             <p>✅ Total Paid: ₹{getTotalPaid(plan.payments)}</p>
             <p>📉 Remaining: ₹{getBalance(plan)}</p>
-            <p>
-              Status: {hasPaidThisMonth(plan) ? (
-                <span style={styles.fixedBadge}>🟢 Paid this month</span>
-              ) : (
-                <span style={styles.overdueBadge}>🔴 Overdue</span>
-              )}
-            </p>
 
             <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
               ✅ Pay EMI
@@ -158,7 +139,7 @@ export default function ExistingPlans({ goBack }) {
                   const runningTotal = plan.payments
                     .slice(0, idx + 1)
                     .reduce((sum, p) => sum + p.amount, 0);
-                  const balance = plan.totalAmount - runningTotal;
+                  const balance = Math.max(0, plan.totalAmount - runningTotal);
 
                   return (
                     <tr key={idx}>
@@ -237,13 +218,6 @@ const styles = {
   excessBadge: {
     padding: "4px 8px",
     backgroundColor: "#fd7e14",
-    color: "white",
-    borderRadius: "5px",
-    fontSize: "0.9rem",
-  },
-  overdueBadge: {
-    padding: "4px 8px",
-    backgroundColor: "#dc3545",
     color: "white",
     borderRadius: "5px",
     fontSize: "0.9rem",
