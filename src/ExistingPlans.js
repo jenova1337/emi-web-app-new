@@ -6,7 +6,6 @@ export default function ExistingPlans({ goBack }) {
   useEffect(() => {
     let saved = JSON.parse(localStorage.getItem("emiPlans")) || [];
 
-    // Convert old format (paid) to new format (payments)
     saved = saved.map((plan) => {
       if (!plan.payments && Array.isArray(plan.paid)) {
         plan.payments = plan.paid.map((date) => ({
@@ -46,22 +45,18 @@ export default function ExistingPlans({ goBack }) {
     const updatedPlans = [...plans];
     const plan = updatedPlans[index];
 
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
+    const inputDate = prompt("Enter date (dd/mm/yyyy) or leave blank for today:");
+    const dateStr = inputDate || new Date().toLocaleDateString("en-GB");
+
+    const [day, month, year] = dateStr.split("/").map(Number);
 
     const alreadyPaidThisMonth = plan.payments.some((p) => {
-      const [day, month, year] = p.date.split("/").map(Number);
-      return (
-        p.type === "Fixed" &&
-        month - 1 === currentMonth &&
-        year === currentYear
-      );
+      const [d, m, y] = p.date.split("/").map(Number);
+      return p.type === "Fixed" && m === month && y === year;
     });
 
-    const date = prompt("Enter date (dd/mm/yyyy) or leave blank for today:");
     const payment = {
-      date: date || today.toLocaleDateString("en-GB"),
+      date: dateStr,
       amount: plan.monthlyEmi,
       type: alreadyPaidThisMonth ? "Excess" : "Fixed",
     };
@@ -70,7 +65,7 @@ export default function ExistingPlans({ goBack }) {
     savePlans(updatedPlans);
 
     if (alreadyPaidThisMonth) {
-      alert("Already paid EMI for this month. Added as Excess Payment.");
+      alert("Already paid EMI for this month. This has been added as Excess Payment.");
     }
   };
 
