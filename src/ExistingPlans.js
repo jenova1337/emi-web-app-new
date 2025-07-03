@@ -92,6 +92,23 @@ export default function ExistingPlans({ goBack }) {
   const getBalance = (plan) =>
     plan.totalAmount - getTotalPaid(plan.payments);
 
+  const hasPaidThisMonth = (plan) => {
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+    return plan.payments.some((p) => {
+      const [d, m, y] = p.date.split("/").map(Number);
+      return p.type === "Fixed" && m === month && y === year;
+    });
+  };
+
+  const getNextDueDate = (plan) => {
+    const start = new Date(plan.startDate.split("/").reverse().join("-"));
+    const nextMonth = start.getMonth() + plan.payments.filter(p => p.type === "Fixed").length;
+    const nextDue = new Date(start.setMonth(nextMonth));
+    return nextDue.toLocaleDateString("en-GB");
+  };
+
   return (
     <div style={{ padding: "1rem" }}>
       <h2>📂 Existing EMI Plans</h2>
@@ -106,8 +123,16 @@ export default function ExistingPlans({ goBack }) {
             <p>💰 Total Amount: ₹{plan.totalAmount}</p>
             <p>📅 Monthly EMI: ₹{plan.monthlyEmi}</p>
             <p>📆 Start Date: {plan.startDate}</p>
+            <p>📆 Next Due: {getNextDueDate(plan)}</p>
             <p>✅ Total Paid: ₹{getTotalPaid(plan.payments)}</p>
             <p>📉 Remaining: ₹{getBalance(plan)}</p>
+            <p>
+              Status: {hasPaidThisMonth(plan) ? (
+                <span style={styles.fixedBadge}>🟢 Paid this month</span>
+              ) : (
+                <span style={styles.overdueBadge}>🔴 Overdue</span>
+              )}
+            </p>
 
             <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
               ✅ Pay EMI
@@ -212,6 +237,13 @@ const styles = {
   excessBadge: {
     padding: "4px 8px",
     backgroundColor: "#fd7e14",
+    color: "white",
+    borderRadius: "5px",
+    fontSize: "0.9rem",
+  },
+  overdueBadge: {
+    padding: "4px 8px",
+    backgroundColor: "#dc3545",
     color: "white",
     borderRadius: "5px",
     fontSize: "0.9rem",
