@@ -38,13 +38,36 @@ export default function ExistingPlans({ goBack }) {
   const addPayment = (planIndex, amount, type, customDate) => {
     const updatedPlans = [...plans];
     const plan = updatedPlans[planIndex];
-    const payment = {
-      date: customDate || new Date().toLocaleDateString("en-GB"),
-      amount: parseFloat(amount),
+
+    const totalPaid = getTotalPaid(plan.payments);
+    const remaining = plan.totalAmount - totalPaid;
+
+    const paymentAmount = parseFloat(amount);
+    const date = customDate || new Date().toLocaleDateString("en-GB");
+
+    if (paymentAmount <= 0 || isNaN(paymentAmount)) {
+      alert("Invalid payment amount.");
+      return;
+    }
+
+    if (remaining <= 0) {
+      alert("🎉 This EMI plan is fully paid. No further payments allowed.");
+      return;
+    }
+
+    if (paymentAmount > remaining) {
+      alert(`❌ Cannot pay ₹${paymentAmount}. Only ₹${remaining} remaining.`);
+      return;
+    }
+
+    plan.payments.push({
+      date,
+      amount: paymentAmount,
       type,
-    };
-    plan.payments.push(payment);
+    });
+
     savePlans(updatedPlans);
+    alert(`✅ ${type} payment of ₹${paymentAmount} added successfully.`);
   };
 
   const handleFixedPayment = (index) => {
@@ -71,14 +94,7 @@ export default function ExistingPlans({ goBack }) {
       return;
     }
 
-    plan.payments.push({
-      date: dateStr,
-      amount: plan.monthlyEmi,
-      type: "Fixed",
-    });
-
-    savePlans(updatedPlans);
-    alert("✅ EMI paid successfully for this month.");
+    addPayment(index, plan.monthlyEmi, "Fixed", dateStr);
   };
 
   const handleExcessPayment = (index) => {
