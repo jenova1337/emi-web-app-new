@@ -71,12 +71,11 @@ export default function ExistingPlans({ goBack }) {
   };
 
   const handleFixedPayment = (index) => {
-    const updatedPlans = [...plans];
-    const plan = updatedPlans[index];
-
+    const plan = plans[index];
     const totalPaid = getTotalPaid(plan.payments);
+
     if (totalPaid >= plan.totalAmount) {
-      alert("🎉 This EMI plan is fully paid. No further Fixed payments allowed.");
+      alert("🎉 EMI fully paid. No more Fixed payments allowed.");
       return;
     }
 
@@ -90,7 +89,7 @@ export default function ExistingPlans({ goBack }) {
     });
 
     if (alreadyPaidThisMonth) {
-      alert("⚠️ EMI already paid for this month. Use 'Add Excess Payment' for additional payment.");
+      alert("⚠️ EMI already paid this month. Use 'Excess Payment' for extra.");
       return;
     }
 
@@ -98,11 +97,21 @@ export default function ExistingPlans({ goBack }) {
   };
 
   const handleExcessPayment = (index) => {
+    const plan = plans[index];
+    const totalPaid = getTotalPaid(plan.payments);
+    const remaining = plan.totalAmount - totalPaid;
+
+    if (remaining <= 0) {
+      alert("🎉 EMI fully paid. No more excess payments allowed.");
+      return;
+    }
+
     const amount = prompt("Enter excess amount:");
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
       alert("Invalid excess amount.");
       return;
     }
+
     const date = prompt("Enter date (dd/mm/yyyy) or leave blank for today:");
     addPayment(index, amount, "Excess", date);
   };
