@@ -6,7 +6,6 @@ export default function ExistingPlans({ goBack }) {
   useEffect(() => {
     let saved = JSON.parse(localStorage.getItem("emiPlans")) || [];
 
-    // Convert old format
     saved = saved.map((plan) => {
       if (!plan.payments && Array.isArray(plan.paid)) {
         plan.payments = plan.paid.map((date) => ({
@@ -39,19 +38,19 @@ export default function ExistingPlans({ goBack }) {
   const addPayment = (planIndex, amount, type, customDate) => {
     const updatedPlans = [...plans];
     const plan = updatedPlans[planIndex];
+
     const totalPaid = getTotalPaid(plan.payments);
     const remaining = plan.totalAmount - totalPaid;
-
     const paymentAmount = parseFloat(amount);
     const date = customDate || new Date().toLocaleDateString("en-GB");
 
-    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+    if (paymentAmount <= 0 || isNaN(paymentAmount)) {
       alert("Invalid payment amount.");
       return;
     }
 
     if (remaining <= 0) {
-      alert("🎉 EMI fully paid. No more payments allowed.");
+      alert("🎉 This EMI plan is fully paid. No further payments allowed.");
       return;
     }
 
@@ -62,7 +61,7 @@ export default function ExistingPlans({ goBack }) {
 
     plan.payments.push({ date, amount: paymentAmount, type });
     savePlans(updatedPlans);
-    alert(`✅ ${type} payment of ₹${paymentAmount} added.`);
+    alert(`✅ ${type} payment of ₹${paymentAmount} added successfully.`);
   };
 
   const handleFixedPayment = (index) => {
@@ -79,13 +78,13 @@ export default function ExistingPlans({ goBack }) {
     const dateStr = inputDate || new Date().toLocaleDateString("en-GB");
     const [day, month, year] = dateStr.split("/").map(Number);
 
-    const paidThisMonth = plan.payments.find((p) => {
+    const alreadyPaidThisMonth = plan.payments.some((p) => {
       const [d, m, y] = p.date.split("/").map(Number);
       return p.type === "Fixed" && m === month && y === year;
     });
 
-    if (paidThisMonth) {
-      alert(`⚠️ EMI already paid this month on ${paidThisMonth.date}. Use 'Excess Payment' if needed.`);
+    if (alreadyPaidThisMonth) {
+      alert("⚠️ EMI already paid this month. Use 'Excess Payment' for extra.");
       return;
     }
 
@@ -131,6 +130,7 @@ export default function ExistingPlans({ goBack }) {
         plans.map((plan, index) => {
           const totalPaid = getTotalPaid(plan.payments);
           const remaining = getBalance(plan);
+          const isPaidOff = totalPaid >= plan.totalAmount;
 
           return (
             <div key={plan.id} style={styles.card}>
@@ -141,12 +141,18 @@ export default function ExistingPlans({ goBack }) {
               <p>✅ Total Paid: ₹{totalPaid}</p>
               <p>📉 Remaining: ₹{remaining}</p>
 
-              <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
-                ✅ Pay EMI
-              </button>
-              <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
-                ➕ Add Excess Payment
-              </button>
+              {isPaidOff ? (
+                <p style={{ color: "green", fontWeight: "bold" }}>✅ Plan fully paid</p>
+              ) : (
+                <>
+                  <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
+                    ✅ Pay EMI
+                  </button>
+                  <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
+                    ➕ Add Excess Payment
+                  </button>
+                </>
+              )}
 
               <h4>📋 Payment History</h4>
               <table border="1" cellPadding="5">
@@ -166,6 +172,7 @@ export default function ExistingPlans({ goBack }) {
                       .slice(0, idx + 1)
                       .reduce((sum, p) => sum + p.amount, 0);
                     const balance = Math.max(0, plan.totalAmount - runningTotal);
+                    const overPaid = plan.totalAmount - runningTotal <= 0;
 
                     return (
                       <tr key={idx}>
@@ -178,7 +185,13 @@ export default function ExistingPlans({ goBack }) {
                           </span>
                         </td>
                         <td>₹{runningTotal}</td>
-                        <td>₹{balance}</td>
+                        <td>
+                          {overPaid ? (
+                            <span style={{ color: "green", fontWeight: "bold" }}>EMI Over</span>
+                          ) : (
+                            `₹${balance}`
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
