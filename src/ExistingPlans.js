@@ -82,8 +82,12 @@ export default function ExistingPlans({ goBack }) {
       return p.type === "Fixed" && m === month && y === year;
     });
 
-    if (alreadyPaidThisMonth) {
-      alert(`⚠️ EMI already paid for ${month}/${year}. Use 'Excess Payment' for extra.`);
+    const sameDatePaid = plan.payments.some(
+      (p) => p.type === "Fixed" && p.date === dateStr
+    );
+
+    if (sameDatePaid || alreadyPaidThisMonth) {
+      alert(`⚠️ EMI already paid for this month (${month}/${year}). Use 'Excess Payment' for extra.`);
       return;
     }
 
@@ -121,7 +125,9 @@ export default function ExistingPlans({ goBack }) {
   return (
     <div style={{ padding: "1rem" }}>
       <h2>📂 Existing EMI Plans</h2>
-      <button onClick={goBack} style={styles.backBtn}>🔙 Back to Dashboard</button>
+      <button onClick={goBack} style={styles.backBtn}>
+        🔙 Back to Dashboard
+      </button>
 
       {plans.length === 0 ? (
         <p>No EMI plans found.</p>
@@ -139,7 +145,9 @@ export default function ExistingPlans({ goBack }) {
               <p>📆 Start Date: {plan.startDate}</p>
               <p>✅ Total Paid: ₹{totalPaid}</p>
               <p>📉 Remaining: ₹{remaining}</p>
-              {isFullyPaid && <p style={{ color: "green", fontWeight: "bold" }}>🎉 EMI Over</p>}
+              {isFullyPaid && (
+                <p style={{ color: "green", fontWeight: "bold" }}>🎉 EMI Over</p>
+              )}
 
               <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
                 ✅ Pay EMI
@@ -173,7 +181,13 @@ export default function ExistingPlans({ goBack }) {
                         <td>{pay.date}</td>
                         <td>₹{pay.amount}</td>
                         <td>
-                          <span style={pay.type === "Fixed" ? styles.fixedBadge : styles.excessBadge}>
+                          <span
+                            style={
+                              pay.type === "Fixed"
+                                ? styles.fixedBadge
+                                : styles.excessBadge
+                            }
+                          >
                             {pay.type}
                           </span>
                         </td>
@@ -184,7 +198,9 @@ export default function ExistingPlans({ goBack }) {
                   })}
                   {(!plan.payments || plan.payments.length === 0) && (
                     <tr>
-                      <td colSpan="6" align="center">No payments yet</td>
+                      <td colSpan="6" align="center">
+                        No payments yet
+                      </td>
                     </tr>
                   )}
                 </tbody>
