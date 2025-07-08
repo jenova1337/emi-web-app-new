@@ -32,15 +32,12 @@ export default function ExistingPlans({ goBack }) {
   const getTotalPaid = (payments) =>
     payments.reduce((sum, p) => sum + p.amount, 0);
 
-  const getBalance = (plan) => {
-    const balance = plan.totalAmount - getTotalPaid(plan.payments);
-    return balance <= 0 ? 0 : balance;
-  };
+  const getBalance = (plan) =>
+    Math.max(0, plan.totalAmount - getTotalPaid(plan.payments));
 
   const addPayment = (planIndex, amount, type, customDate) => {
     const updatedPlans = [...plans];
     const plan = updatedPlans[planIndex];
-
     const totalPaid = getTotalPaid(plan.payments);
     const remaining = plan.totalAmount - totalPaid;
     const paymentAmount = parseFloat(amount);
@@ -86,7 +83,7 @@ export default function ExistingPlans({ goBack }) {
     });
 
     if (alreadyPaidThisMonth) {
-      alert("⚠️ EMI already paid this month. Use 'Excess Payment' for extra.");
+      alert(`⚠️ EMI already paid for ${month}/${year}. Use 'Excess Payment' for extra.`);
       return;
     }
 
@@ -131,8 +128,8 @@ export default function ExistingPlans({ goBack }) {
       ) : (
         plans.map((plan, index) => {
           const totalPaid = getTotalPaid(plan.payments);
-          const remaining = plan.totalAmount - totalPaid;
-          const displayBalance = remaining <= 0 ? "EMI Over" : `₹${remaining}`;
+          const remaining = getBalance(plan);
+          const isFullyPaid = totalPaid >= plan.totalAmount;
 
           return (
             <div key={plan.id} style={styles.card}>
@@ -141,7 +138,8 @@ export default function ExistingPlans({ goBack }) {
               <p>📅 Monthly EMI: ₹{plan.monthlyEmi}</p>
               <p>📆 Start Date: {plan.startDate}</p>
               <p>✅ Total Paid: ₹{totalPaid}</p>
-              <p>📉 Remaining: {displayBalance}</p>
+              <p>📉 Remaining: ₹{remaining}</p>
+              {isFullyPaid && <p style={{ color: "green", fontWeight: "bold" }}>🎉 EMI Over</p>}
 
               <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
                 ✅ Pay EMI
@@ -167,9 +165,7 @@ export default function ExistingPlans({ goBack }) {
                     const runningTotal = plan.payments
                       .slice(0, idx + 1)
                       .reduce((sum, p) => sum + p.amount, 0);
-
-                    const balance = plan.totalAmount - runningTotal;
-                    const displayToBePaid = balance <= 0 ? "EMI Over" : `₹${balance}`;
+                    const balance = Math.max(0, plan.totalAmount - runningTotal);
 
                     return (
                       <tr key={idx}>
@@ -182,7 +178,7 @@ export default function ExistingPlans({ goBack }) {
                           </span>
                         </td>
                         <td>₹{runningTotal}</td>
-                        <td>{displayToBePaid}</td>
+                        <td>{balance === 0 ? "EMI Over" : `₹${balance}`}</td>
                       </tr>
                     );
                   })}
