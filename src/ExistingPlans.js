@@ -38,19 +38,19 @@ export default function ExistingPlans({ goBack }) {
   const addPayment = (planIndex, amount, type, customDate) => {
     const updatedPlans = [...plans];
     const plan = updatedPlans[planIndex];
-
     const totalPaid = getTotalPaid(plan.payments);
+
+    if (totalPaid >= plan.totalAmount) {
+      alert("🎉 This EMI plan is fully paid. No further payments allowed.");
+      return;
+    }
+
     const remaining = plan.totalAmount - totalPaid;
     const paymentAmount = parseFloat(amount);
     const date = customDate || new Date().toLocaleDateString("en-GB");
 
     if (paymentAmount <= 0 || isNaN(paymentAmount)) {
-      alert("❌ Invalid payment amount.");
-      return;
-    }
-
-    if (remaining <= 0) {
-      alert("🎉 This EMI plan is fully paid. No further payments allowed.");
+      alert("Invalid payment amount.");
       return;
     }
 
@@ -67,27 +67,27 @@ export default function ExistingPlans({ goBack }) {
   const handleFixedPayment = (index) => {
     const plan = plans[index];
     const totalPaid = getTotalPaid(plan.payments);
-    const remaining = plan.totalAmount - totalPaid;
 
-    if (remaining <= 0) {
+    if (totalPaid >= plan.totalAmount) {
       alert("🎉 EMI fully paid. No more Fixed payments allowed.");
       return;
     }
 
     const inputDate = prompt("Enter date (dd/mm/yyyy) or leave blank for today:");
     const dateStr = inputDate || new Date().toLocaleDateString("en-GB");
-    const [_, m, y] = dateStr.split("/").map(Number);
+    const [day, month, year] = dateStr.split("/").map(Number);
 
     const alreadyPaidThisMonth = plan.payments.some((p) => {
-      const [__, mm, yy] = p.date.split("/").map(Number);
-      return p.type === "Fixed" && mm === m && yy === y;
+      const [d, m, y] = p.date.split("/").map(Number);
+      return p.type === "Fixed" && m === month && y === year;
     });
 
     if (alreadyPaidThisMonth) {
-      alert(`⚠️ EMI already paid for ${m}/${y}. Use 'Excess Payment' for extra.`);
+      alert(`⚠️ EMI already paid for ${month}/${year}. Use 'Excess Payment' for extra.`);
       return;
     }
 
+    const remaining = plan.totalAmount - totalPaid;
     const emiToPay = Math.min(plan.monthlyEmi, remaining);
     addPayment(index, emiToPay, "Fixed", dateStr);
   };
@@ -95,16 +95,15 @@ export default function ExistingPlans({ goBack }) {
   const handleExcessPayment = (index) => {
     const plan = plans[index];
     const totalPaid = getTotalPaid(plan.payments);
-    const remaining = plan.totalAmount - totalPaid;
 
-    if (remaining <= 0) {
+    if (totalPaid >= plan.totalAmount) {
       alert("🎉 EMI fully paid. No more Excess payments allowed.");
       return;
     }
 
     const amount = prompt("Enter excess amount:");
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-      alert("❌ Invalid excess amount.");
+      alert("Invalid excess amount.");
       return;
     }
 
@@ -167,6 +166,7 @@ export default function ExistingPlans({ goBack }) {
                       .slice(0, idx + 1)
                       .reduce((sum, p) => sum + p.amount, 0);
                     const balance = Math.max(0, plan.totalAmount - runningTotal);
+                    const overpaid = runningTotal >= plan.totalAmount;
 
                     return (
                       <tr key={idx}>
@@ -179,7 +179,7 @@ export default function ExistingPlans({ goBack }) {
                           </span>
                         </td>
                         <td>₹{runningTotal}</td>
-                        <td>{balance === 0 ? "EMI Over" : `₹${balance}`}</td>
+                        <td>{overpaid ? "EMI Over" : `₹${balance}`}</td>
                       </tr>
                     );
                   })}
