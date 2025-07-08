@@ -32,8 +32,10 @@ export default function ExistingPlans({ goBack }) {
   const getTotalPaid = (payments) =>
     payments.reduce((sum, p) => sum + p.amount, 0);
 
-  const getBalance = (plan) =>
-    Math.max(0, plan.totalAmount - getTotalPaid(plan.payments));
+  const getBalance = (plan) => {
+    const balance = plan.totalAmount - getTotalPaid(plan.payments);
+    return balance <= 0 ? 0 : balance;
+  };
 
   const addPayment = (planIndex, amount, type, customDate) => {
     const updatedPlans = [...plans];
@@ -129,8 +131,8 @@ export default function ExistingPlans({ goBack }) {
       ) : (
         plans.map((plan, index) => {
           const totalPaid = getTotalPaid(plan.payments);
-          const remaining = getBalance(plan);
-          const isPaidOff = totalPaid >= plan.totalAmount;
+          const remaining = plan.totalAmount - totalPaid;
+          const displayBalance = remaining <= 0 ? "EMI Over" : `₹${remaining}`;
 
           return (
             <div key={plan.id} style={styles.card}>
@@ -139,20 +141,14 @@ export default function ExistingPlans({ goBack }) {
               <p>📅 Monthly EMI: ₹{plan.monthlyEmi}</p>
               <p>📆 Start Date: {plan.startDate}</p>
               <p>✅ Total Paid: ₹{totalPaid}</p>
-              <p>📉 Remaining: ₹{remaining}</p>
+              <p>📉 Remaining: {displayBalance}</p>
 
-              {isPaidOff ? (
-                <p style={{ color: "green", fontWeight: "bold" }}>✅ Plan fully paid</p>
-              ) : (
-                <>
-                  <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
-                    ✅ Pay EMI
-                  </button>
-                  <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
-                    ➕ Add Excess Payment
-                  </button>
-                </>
-              )}
+              <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
+                ✅ Pay EMI
+              </button>
+              <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
+                ➕ Add Excess Payment
+              </button>
 
               <h4>📋 Payment History</h4>
               <table border="1" cellPadding="5">
@@ -171,8 +167,9 @@ export default function ExistingPlans({ goBack }) {
                     const runningTotal = plan.payments
                       .slice(0, idx + 1)
                       .reduce((sum, p) => sum + p.amount, 0);
-                    const balance = Math.max(0, plan.totalAmount - runningTotal);
-                    const overPaid = plan.totalAmount - runningTotal <= 0;
+
+                    const balance = plan.totalAmount - runningTotal;
+                    const displayToBePaid = balance <= 0 ? "EMI Over" : `₹${balance}`;
 
                     return (
                       <tr key={idx}>
@@ -185,13 +182,7 @@ export default function ExistingPlans({ goBack }) {
                           </span>
                         </td>
                         <td>₹{runningTotal}</td>
-                        <td>
-                          {overPaid ? (
-                            <span style={{ color: "green", fontWeight: "bold" }}>EMI Over</span>
-                          ) : (
-                            `₹${balance}`
-                          )}
-                        </td>
+                        <td>{displayToBePaid}</td>
                       </tr>
                     );
                   })}
