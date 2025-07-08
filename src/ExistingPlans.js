@@ -6,6 +6,7 @@ export default function ExistingPlans({ goBack }) {
   useEffect(() => {
     let saved = JSON.parse(localStorage.getItem("emiPlans")) || [];
 
+    // Convert old format if needed
     saved = saved.map((plan) => {
       if (!plan.payments && Array.isArray(plan.paid)) {
         plan.payments = plan.paid.map((date) => ({
@@ -41,7 +42,6 @@ export default function ExistingPlans({ goBack }) {
 
     const totalPaid = getTotalPaid(plan.payments);
     const remaining = plan.totalAmount - totalPaid;
-
     const paymentAmount = parseFloat(amount);
     const date = customDate || new Date().toLocaleDateString("en-GB");
 
@@ -60,12 +60,7 @@ export default function ExistingPlans({ goBack }) {
       return;
     }
 
-    plan.payments.push({
-      date,
-      amount: paymentAmount,
-      type,
-    });
-
+    plan.payments.push({ date, amount: paymentAmount, type });
     savePlans(updatedPlans);
     alert(`✅ ${type} payment of ₹${paymentAmount} added successfully.`);
   };
@@ -73,8 +68,9 @@ export default function ExistingPlans({ goBack }) {
   const handleFixedPayment = (index) => {
     const plan = plans[index];
     const totalPaid = getTotalPaid(plan.payments);
+    const remaining = plan.totalAmount - totalPaid;
 
-    if (totalPaid >= plan.totalAmount) {
+    if (remaining <= 0) {
       alert("🎉 EMI fully paid. No more Fixed payments allowed.");
       return;
     }
@@ -93,7 +89,8 @@ export default function ExistingPlans({ goBack }) {
       return;
     }
 
-    addPayment(index, plan.monthlyEmi, "Fixed", dateStr);
+    const emiToPay = Math.min(plan.monthlyEmi, remaining);
+    addPayment(index, emiToPay, "Fixed", dateStr);
   };
 
   const handleExcessPayment = (index) => {
@@ -102,7 +99,7 @@ export default function ExistingPlans({ goBack }) {
     const remaining = plan.totalAmount - totalPaid;
 
     if (remaining <= 0) {
-      alert("🎉 EMI fully paid. No more excess payments allowed.");
+      alert("🎉 EMI fully paid. No more Excess payments allowed.");
       return;
     }
 
@@ -131,69 +128,73 @@ export default function ExistingPlans({ goBack }) {
       {plans.length === 0 ? (
         <p>No EMI plans found.</p>
       ) : (
-        plans.map((plan, index) => (
-          <div key={plan.id} style={styles.card}>
-            <h3>{plan.title}</h3>
-            <p>💰 Total Amount: ₹{plan.totalAmount}</p>
-            <p>📅 Monthly EMI: ₹{plan.monthlyEmi}</p>
-            <p>📆 Start Date: {plan.startDate}</p>
-            <p>✅ Total Paid: ₹{getTotalPaid(plan.payments)}</p>
-            <p>📉 Remaining: ₹{getBalance(plan)}</p>
+        plans.map((plan, index) => {
+          const totalPaid = getTotalPaid(plan.payments);
+          const remaining = getBalance(plan);
+          return (
+            <div key={plan.id} style={styles.card}>
+              <h3>{plan.title}</h3>
+              <p>💰 Total Amount: ₹{plan.totalAmount}</p>
+              <p>📅 Monthly EMI: ₹{plan.monthlyEmi}</p>
+              <p>📆 Start Date: {plan.startDate}</p>
+              <p>✅ Total Paid: ₹{totalPaid}</p>
+              <p>📉 Remaining: ₹{remaining}</p>
 
-            <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
-              ✅ Pay EMI
-            </button>
-            <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
-              ➕ Add Excess Payment
-            </button>
+              <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
+                ✅ Pay EMI
+              </button>
+              <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
+                ➕ Add Excess Payment
+              </button>
 
-            <h4>📋 Payment History</h4>
-            <table border="1" cellPadding="5">
-              <thead>
-                <tr>
-                  <th>S.No</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Type</th>
-                  <th>Total Paid</th>
-                  <th>To Be Paid</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(plan.payments || []).map((pay, idx) => {
-                  const runningTotal = plan.payments
-                    .slice(0, idx + 1)
-                    .reduce((sum, p) => sum + p.amount, 0);
-                  const balance = Math.max(0, plan.totalAmount - runningTotal);
-
-                  return (
-                    <tr key={idx}>
-                      <td>{idx + 1}</td>
-                      <td>{pay.date}</td>
-                      <td>₹{pay.amount}</td>
-                      <td>
-                        <span style={pay.type === "Fixed" ? styles.fixedBadge : styles.excessBadge}>
-                          {pay.type}
-                        </span>
-                      </td>
-                      <td>₹{runningTotal}</td>
-                      <td>₹{balance}</td>
-                    </tr>
-                  );
-                })}
-                {(!plan.payments || plan.payments.length === 0) && (
+              <h4>📋 Payment History</h4>
+              <table border="1" cellPadding="5">
+                <thead>
                   <tr>
-                    <td colSpan="6" align="center">No payments yet</td>
+                    <th>S.No</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Total Paid</th>
+                    <th>To Be Paid</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(plan.payments || []).map((pay, idx) => {
+                    const runningTotal = plan.payments
+                      .slice(0, idx + 1)
+                      .reduce((sum, p) => sum + p.amount, 0);
+                    const balance = Math.max(0, plan.totalAmount - runningTotal);
 
-            <button onClick={() => deletePlan(plan.id)} style={styles.deleteBtn}>
-              🗑 Delete Plan
-            </button>
-          </div>
-        ))
+                    return (
+                      <tr key={idx}>
+                        <td>{idx + 1}</td>
+                        <td>{pay.date}</td>
+                        <td>₹{pay.amount}</td>
+                        <td>
+                          <span style={pay.type === "Fixed" ? styles.fixedBadge : styles.excessBadge}>
+                            {pay.type}
+                          </span>
+                        </td>
+                        <td>₹{runningTotal}</td>
+                        <td>₹{balance}</td>
+                      </tr>
+                    );
+                  })}
+                  {(!plan.payments || plan.payments.length === 0) && (
+                    <tr>
+                      <td colSpan="6" align="center">No payments yet</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              <button onClick={() => deletePlan(plan.id)} style={styles.deleteBtn}>
+                🗑 Delete Plan
+              </button>
+            </div>
+          );
+        })
       )}
     </div>
   );
