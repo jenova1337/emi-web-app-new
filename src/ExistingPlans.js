@@ -5,6 +5,7 @@ export default function ExistingPlans({ goBack }) {
 
   useEffect(() => {
     let saved = JSON.parse(localStorage.getItem("emiPlans")) || [];
+
     saved = saved.map((plan) => {
       if (!plan.payments && Array.isArray(plan.paid)) {
         plan.payments = plan.paid.map((date) => ({
@@ -18,6 +19,7 @@ export default function ExistingPlans({ goBack }) {
       }
       return plan;
     });
+
     setPlans(saved);
     localStorage.setItem("emiPlans", JSON.stringify(saved));
   }, []);
@@ -38,6 +40,7 @@ export default function ExistingPlans({ goBack }) {
     const plan = updatedPlans[planIndex];
     const totalPaid = getTotalPaid(plan.payments);
     const remaining = plan.totalAmount - totalPaid;
+
     const paymentAmount = parseFloat(amount);
     const date = customDate || new Date().toLocaleDateString("en-GB");
 
@@ -51,14 +54,16 @@ export default function ExistingPlans({ goBack }) {
       return;
     }
 
-    if (paymentAmount > remaining) {
-      alert(`❌ Cannot pay ₹${paymentAmount}. Only ₹${remaining} remaining.`);
-      return;
-    }
+    const allowedAmount = Math.min(paymentAmount, remaining);
 
-    plan.payments.push({ date, amount: paymentAmount, type });
+    plan.payments.push({ date, amount: allowedAmount, type });
     savePlans(updatedPlans);
-    alert(`✅ ${type} payment of ₹${paymentAmount} added successfully.`);
+
+    if (allowedAmount < paymentAmount) {
+      alert(`Only ₹${allowedAmount} was accepted. Plan is now fully paid.`);
+    } else {
+      alert(`✅ ${type} payment of ₹${allowedAmount} added successfully.`);
+    }
   };
 
   const handleFixedPayment = (index) => {
@@ -74,18 +79,14 @@ export default function ExistingPlans({ goBack }) {
     const inputDate = prompt("Enter date (dd/mm/yyyy) or leave blank for today:");
     const dateStr = inputDate || new Date().toLocaleDateString("en-GB");
     const [day, month, year] = dateStr.split("/").map(Number);
-    const currentDate = new Date(year, month - 1, day);
 
-    const alreadyPaidWithin30Days = plan.payments.some((p) => {
-      if (p.type !== "Fixed") return false;
+    const alreadyPaidThisMonth = plan.payments.some((p) => {
       const [d, m, y] = p.date.split("/").map(Number);
-      const paidDate = new Date(y, m - 1, d);
-      const diff = (currentDate - paidDate) / (1000 * 60 * 60 * 24);
-      return diff >= 0 && diff < 30;
+      return p.type === "Fixed" && m === month && y === year;
     });
 
-    if (alreadyPaidWithin30Days) {
-      alert("⚠️ EMI already paid in the last 30 days. Use 'Excess Payment' for extra.");
+    if (alreadyPaidThisMonth) {
+      alert(`⚠️ EMI already paid for ${month}/${year}. Use 'Excess Payment' for extra.`);
       return;
     }
 
@@ -141,7 +142,9 @@ export default function ExistingPlans({ goBack }) {
               <p>📆 Start Date: {plan.startDate}</p>
               <p>✅ Total Paid: ₹{totalPaid}</p>
               <p>📉 Remaining: ₹{remaining}</p>
-              {isFullyPaid && <p style={{ color: "green", fontWeight: "bold" }}>🎉 EMI Over</p>}
+              {isFullyPaid && (
+                <p style={{ color: "green", fontWeight: "bold" }}>🎉 EMI Over</p>
+              )}
 
               <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
                 ✅ Pay EMI
