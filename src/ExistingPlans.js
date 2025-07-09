@@ -5,7 +5,6 @@ export default function ExistingPlans({ goBack }) {
 
   useEffect(() => {
     let saved = JSON.parse(localStorage.getItem("emiPlans")) || [];
-
     saved = saved.map((plan) => {
       if (!plan.payments && Array.isArray(plan.paid)) {
         plan.payments = plan.paid.map((date) => ({
@@ -19,7 +18,6 @@ export default function ExistingPlans({ goBack }) {
       }
       return plan;
     });
-
     setPlans(saved);
     localStorage.setItem("emiPlans", JSON.stringify(saved));
   }, []);
@@ -39,18 +37,17 @@ export default function ExistingPlans({ goBack }) {
     const updatedPlans = [...plans];
     const plan = updatedPlans[planIndex];
     const totalPaid = getTotalPaid(plan.payments);
-
-    if (totalPaid >= plan.totalAmount) {
-      alert("🎉 This EMI plan is fully paid. No further payments allowed.");
-      return;
-    }
-
     const remaining = plan.totalAmount - totalPaid;
     const paymentAmount = parseFloat(amount);
     const date = customDate || new Date().toLocaleDateString("en-GB");
 
     if (paymentAmount <= 0 || isNaN(paymentAmount)) {
       alert("Invalid payment amount.");
+      return;
+    }
+
+    if (remaining <= 0) {
+      alert("🎉 This EMI plan is fully paid. No further payments allowed.");
       return;
     }
 
@@ -67,8 +64,9 @@ export default function ExistingPlans({ goBack }) {
   const handleFixedPayment = (index) => {
     const plan = plans[index];
     const totalPaid = getTotalPaid(plan.payments);
+    const remaining = plan.totalAmount - totalPaid;
 
-    if (totalPaid >= plan.totalAmount) {
+    if (remaining <= 0) {
       alert("🎉 EMI fully paid. No more Fixed payments allowed.");
       return;
     }
@@ -76,18 +74,21 @@ export default function ExistingPlans({ goBack }) {
     const inputDate = prompt("Enter date (dd/mm/yyyy) or leave blank for today:");
     const dateStr = inputDate || new Date().toLocaleDateString("en-GB");
     const [day, month, year] = dateStr.split("/").map(Number);
+    const currentDate = new Date(year, month - 1, day);
 
-    const alreadyPaidThisMonth = plan.payments.some((p) => {
+    const alreadyPaidWithin30Days = plan.payments.some((p) => {
+      if (p.type !== "Fixed") return false;
       const [d, m, y] = p.date.split("/").map(Number);
-      return p.type === "Fixed" && m === month && y === year;
+      const paidDate = new Date(y, m - 1, d);
+      const diff = (currentDate - paidDate) / (1000 * 60 * 60 * 24);
+      return diff >= 0 && diff < 30;
     });
 
-    if (alreadyPaidThisMonth) {
-      alert(`⚠️ EMI already paid for ${month}/${year}. Use 'Excess Payment' for extra.`);
+    if (alreadyPaidWithin30Days) {
+      alert("⚠️ EMI already paid in the last 30 days. Use 'Excess Payment' for extra.");
       return;
     }
 
-    const remaining = plan.totalAmount - totalPaid;
     const emiToPay = Math.min(plan.monthlyEmi, remaining);
     addPayment(index, emiToPay, "Fixed", dateStr);
   };
@@ -95,8 +96,9 @@ export default function ExistingPlans({ goBack }) {
   const handleExcessPayment = (index) => {
     const plan = plans[index];
     const totalPaid = getTotalPaid(plan.payments);
+    const remaining = plan.totalAmount - totalPaid;
 
-    if (totalPaid >= plan.totalAmount) {
+    if (remaining <= 0) {
       alert("🎉 EMI fully paid. No more Excess payments allowed.");
       return;
     }
@@ -166,7 +168,6 @@ export default function ExistingPlans({ goBack }) {
                       .slice(0, idx + 1)
                       .reduce((sum, p) => sum + p.amount, 0);
                     const balance = Math.max(0, plan.totalAmount - runningTotal);
-                    const overpaid = runningTotal >= plan.totalAmount;
 
                     return (
                       <tr key={idx}>
@@ -179,7 +180,7 @@ export default function ExistingPlans({ goBack }) {
                           </span>
                         </td>
                         <td>₹{runningTotal}</td>
-                        <td>{overpaid ? "EMI Over" : `₹${balance}`}</td>
+                        <td>{balance === 0 ? "EMI Over" : `₹${balance}`}</td>
                       </tr>
                     );
                   })}
