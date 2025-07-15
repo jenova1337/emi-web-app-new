@@ -5,26 +5,20 @@ const Profile = ({ goBack }) => {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
 
-  /* ────────────────────────────────
-     Load user from localStorage
-  ──────────────────────────────── */
   useEffect(() => {
     const email = localStorage.getItem("loggedInUser");
     if (email) {
-      const stored = localStorage.getItem("user_" + email);
-      if (stored) {
-        const parsed = JSON.parse(stored);
+      const storedUser = localStorage.getItem("user_" + email);
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
         setUser(parsed);
         setForm(parsed);
       }
     }
   }, []);
 
-  /* ────────────────────────────────
-     Form helpers
-  ──────────────────────────────── */
   const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm({ ...form, [field]: value });
   };
 
   const handleSave = () => {
@@ -36,53 +30,59 @@ const Profile = ({ goBack }) => {
     alert("Profile updated successfully!");
   };
 
-  if (!user) return <div style={styles.loading}>Loading profile…</div>;
-
-  /* Simple helper for rendering editable vs read‑only field */
-  const Field = ({ label, valueKey, type = "text" }) => (
-    <div style={styles.row}>
-      <label>{label}:</label>
-      {editing && valueKey !== "email" ? (
-        <input
-          type={type}
-          value={form[valueKey] || ""}
-          onChange={(e) => handleChange(valueKey, e.target.value)}
-        />
-      ) : (
-        <span>{user[valueKey] || "-"}</span>
-      )}
-    </div>
-  );
+  if (!user) return <div style={styles.loading}>Loading profile...</div>;
 
   return (
     <div style={styles.container}>
-      <h2> Profile</h2>
-      <button onClick={goBack} style={styles.backBtn}> Back to Dashboard</button>
+      <h2>👤 Profile</h2>
+      <button onClick={goBack} style={styles.backBtn}>🔙 Back to Dashboard</button>
 
       <div style={styles.profileBox}>
-        <Field label="Name"          valueKey="name" />
-        <Field label="Age"           valueKey="age"  type="number" />
-        <Field label="Gender"        valueKey="gender" />
-        <Field label="Income"        valueKey="income" type="number" />
-        <Field label="Family Income" valueKey="familyIncome" type="number" />
-        <Field label="Mobile"        valueKey="mobile" />
-        <Field label="Email"         valueKey="email" />   {/* read‑only */}
+        <div>
+          <label>Name:</label>
+          {editing ? (
+            <input
+              type="text"
+              value={form.name || ""}
+              onChange={(e) => handleChange("name", e.target.value)}
+            />
+          ) : (
+            <span>{user.name}</span>
+          )}
+        </div>
+
+        <div>
+          <label>Email:</label>
+          <span>{user.email}</span>
+        </div>
+
+        <div>
+          <label>Mobile:</label>
+          {editing ? (
+            <input
+              type="text"
+              value={form.mobile || ""}
+              onChange={(e) => handleChange("mobile", e.target.value)}
+            />
+          ) : (
+            <span>{user.mobile}</span>
+          )}
+        </div>
 
         {editing ? (
-          <button onClick={handleSave} style={styles.saveBtn}> Save</button>
+          <button onClick={handleSave} style={styles.saveBtn}>💾 Save</button>
         ) : (
-          <button onClick={() => setEditing(true)} style={styles.editBtn}  Edit Profile</button>
+          <button onClick={() => setEditing(true)} style={styles.editBtn}>✏️ Edit Profile</button>
         )}
       </div>
     </div>
   );
 };
 
-/* ────────────────────────────────
-   Simple styles
-──────────────────────────────── */
 const styles = {
-  container: { padding: "1rem" },
+  container: {
+    padding: "1rem",
+  },
   backBtn: {
     marginBottom: "1rem",
     padding: "8px 16px",
@@ -98,11 +98,6 @@ const styles = {
     borderRadius: "8px",
     maxWidth: "400px",
     lineHeight: "2rem",
-  },
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    marginBottom: "0.5rem",
   },
   editBtn: {
     marginTop: "1rem",
