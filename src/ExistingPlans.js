@@ -38,7 +38,6 @@ export default function ExistingPlans({ goBack }) {
   const addPayment = (planIndex, amount, type, customDate) => {
     const updatedPlans = [...plans];
     const plan = updatedPlans[planIndex];
-
     const totalPaid = getTotalPaid(plan.payments);
     const remaining = plan.totalAmount - totalPaid;
     const paymentAmount = parseFloat(amount);
@@ -55,13 +54,13 @@ export default function ExistingPlans({ goBack }) {
     }
 
     if (paymentAmount > remaining) {
-      alert(`⚠️ You only need ₹${remaining} more to finish. Added only that.`);
-      plan.payments.push({ date, amount: remaining, type });
-    } else {
-      plan.payments.push({ date, amount: paymentAmount, type });
+      alert(`❌ Cannot pay ₹${paymentAmount}. Only ₹${remaining} remaining.`);
+      return;
     }
 
+    plan.payments.push({ date, amount: paymentAmount, type });
     savePlans(updatedPlans);
+    alert(`✅ ${type} payment of ₹${paymentAmount} added successfully.`);
   };
 
   const handleFixedPayment = (index) => {
@@ -89,6 +88,11 @@ export default function ExistingPlans({ goBack }) {
     }
 
     const emiToPay = Math.min(plan.monthlyEmi, remaining);
+    if (emiToPay <= 0) {
+      alert("✅ EMI already completed. No payment needed.");
+      return;
+    }
+
     addPayment(index, emiToPay, "Fixed", dateStr);
   };
 
@@ -142,16 +146,12 @@ export default function ExistingPlans({ goBack }) {
               <p>📉 Remaining: ₹{remaining}</p>
               {isFullyPaid && <p style={{ color: "green", fontWeight: "bold" }}>🎉 EMI Over</p>}
 
-              {!isFullyPaid && (
-                <>
-                  <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
-                    ✅ Pay EMI
-                  </button>
-                  <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
-                    ➕ Add Excess Payment
-                  </button>
-                </>
-              )}
+              <button onClick={() => handleFixedPayment(index)} style={styles.payBtn}>
+                ✅ Pay EMI
+              </button>
+              <button onClick={() => handleExcessPayment(index)} style={styles.excessBtn}>
+                ➕ Add Excess Payment
+              </button>
 
               <h4>📋 Payment History</h4>
               <table border="1" cellPadding="5">
