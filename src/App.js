@@ -5,55 +5,74 @@ import ExistingPlans from "./ExistingPlans";
 import Profile from "./Profile";
 import Login from "./Login";
 import SummaryDashboard from "./SummaryDashboard";
+import FinishedPlans from "./FinishedPlans"; // ✅ NEW
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [view, setView] = useState("dashboard");
 
+  /* ---------- check login once */
   useEffect(() => {
     const user = localStorage.getItem("loggedInUser");
     if (user) setIsLoggedIn(true);
   }, []);
 
+  /* ---------- logout helper */
   const handleLogout = () => {
     localStorage.removeItem("loggedInUser");
     setIsLoggedIn(false);
+    setView("dashboard");
   };
 
+  /* ---------- if not logged in, show login page */
   if (!isLoggedIn) {
     return <Login onLogin={() => setIsLoggedIn(true)} />;
   }
 
+  /* ---------- router‑like view switch */
   const renderView = () => {
     switch (view) {
       case "add":
         return <AddPlan goBack={() => setView("dashboard")} />;
+
       case "existing":
         return <ExistingPlans goBack={() => setView("dashboard")} />;
+
       case "profile":
         return (
-          <div>
+          <>
             <Profile goBack={() => setView("dashboard")} />
-            <button onClick={handleLogout} style={styles.logoutBtn}>🚪 Logout</button>
-          </div>
+            <button onClick={handleLogout} style={styles.logoutBtn}>
+             🚪Logout
+            </button>
+          </>
         );
+
       case "summary":
         return <SummaryDashboard goBack={() => setView("dashboard")} />;
+
+      case "finished": // ⚡ must be BEFORE default
+        return <FinishedPlans goBack={() => setView("dashboard")} />;
+
       default:
-        return <Dashboard onNavigate={setView} onLogout={handleLogout} />;
-	case "finished":
-  return <FinishedPlans goBack={() => setView("dashboard")} />;
+        return (
+          <Dashboard
+            onNavigate={setView}
+            onLogout={handleLogout}
+          />
+        );
     }
   };
 
   return <div>{renderView()}</div>;
 };
 
+/* ---------- simple styles */
 const styles = {
   logoutBtn: {
     marginTop: "20px",
     backgroundColor: "#dc3545",
-    color: "white",
+    color: "#fff",
     padding: "10px 15px",
     border: "none",
     borderRadius: "5px",
