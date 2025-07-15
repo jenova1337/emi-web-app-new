@@ -26,6 +26,11 @@ const Dashboard = ({ onNavigate, onLogout }) => {
         <small>View EMI stats and pie chart.</small>
       </div>
 
+	<div style={styles.card} onClick={() => onNavigate("finished")}>
+ 	 Finished Plans<br />
+ 	 <small>View closed EMI plans & download PDF logs</small>
+	</div>
+
       <button onClick={onLogout} style={styles.logoutBtn}>🚪 Logout</button>
     </div>
   );

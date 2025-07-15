@@ -41,6 +41,8 @@ const App = () => {
         return <SummaryDashboard goBack={() => setView("dashboard")} />;
       default:
         return <Dashboard onNavigate={setView} onLogout={handleLogout} />;
+	case "finished":
+  return <FinishedPlans goBack={() => setView("dashboard")} />;
     }
   };
 
