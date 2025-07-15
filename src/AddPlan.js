@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { getPlans, savePlans } from "./storage";
+import { auth, db } from "./firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 const AddPlan = ({ goBack }) => {
   const [title, setTitle] = useState("");
@@ -8,111 +9,53 @@ const AddPlan = ({ goBack }) => {
   const [months, setMonths] = useState("");
   const [date, setDate] = useState("");
 
-  const handleAdd = () => {
-    if (!title || !amount || !monthly || !months || !date) {
-      alert("Please fill in all fields.");
-      return;
-    }
-
-    const newPlan = {
-      id: Date.now(),
-      title,
-      totalAmount: parseFloat(amount),
-      monthlyEmi: parseFloat(monthly),
-      months: parseInt(months),
-      startDate: date,
-      payments: [], // ✅ New structure for fixed & excess payments
-    };
-
-    const existing = getPlans();
-    savePlans([...existing, newPlan]);
-    alert("Plan added successfully!");
-
-    // Clear form
+  const clear = () => {
     setTitle("");
-    setAmount("");
-    setMonthly("");
-    setMonths("");
-    setDate("");
+     setAmount(""); 
+      setMonthly(""); 
+      setMonths(""); 
+       setDate("");
+  };
+
+  const handleAdd = async () => {
+    if (!title || !amount || !monthly || !months || !date) {
+      alert("Please fill in all fields."); return;
+    }
+    const uid = auth.currentUser.uid;
+    await addDoc(collection(db, "users", uid, "plans"), {
+      title,
+      totalAmount: +amount,
+      monthlyEmi : +monthly,
+      months     : +months,
+      startDate  : date,
+      payments   : [],
+      createdAt  : serverTimestamp()
+    });
+    alert("Plan added 🎉");
+    clear();
   };
 
   return (
-    <div style={styles.container}>
-      <h3>➕ Add New EMI Plan</h3>
+    <div style={s.ct}>
+      <h3>Add New EMI Plan</h3>
 
-      <input
-        placeholder="Plan Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        style={styles.input}
-      /><br />
+      <input style={s.in} placeholder="Title" value={title} onChange={e=>setTitle(e.target.value)}/>
+      <input style={s.in} placeholder="Total Amount" type="number" value={amount} onChange={e=>setAmount(e.target.value)}/>
+      <input style={s.in} placeholder="Monthly EMI" type="number" value={monthly} onChange={e=>setMonthly(e.target.value)}/>
+      <input style={s.in} placeholder="Total Months" type="number" value={months} onChange={e=>setMonths(e.target.value)}/>
+      <input style={s.in} placeholder="Start Date (dd/mm/yyyy)" value={date} onChange={e=>setDate(e.target.value)}/>
 
-      <input
-        placeholder="Total Loan Amount"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-        type="number"
-        style={styles.input}
-      /><br />
-
-      <input
-        placeholder="Monthly EMI"
-        value={monthly}
-        onChange={(e) => setMonthly(e.target.value)}
-        type="number"
-        style={styles.input}
-      /><br />
-
-      <input
-        placeholder="Total Months"
-        value={months}
-        onChange={(e) => setMonths(e.target.value)}
-        type="number"
-        style={styles.input}
-      /><br />
-
-      <input
-        placeholder="Start Date (dd/mm/yyyy)"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        style={styles.input}
-      /><br />
-
-      <button onClick={handleAdd} style={styles.addBtn}>✅ Add Plan</button>
-      <br /><br />
-      <button onClick={goBack} style={styles.backBtn}>🔙 Back to Dashboard</button>
+      <button style={s.add} onClick={handleAdd}>Add Plan ✅</button>
+      <button style={s.back} onClick={goBack}>Back</button>
     </div>
   );
 };
 
-const styles = {
-  container: {
-    padding: "1.5rem",
-    fontFamily: "Arial, sans-serif",
-  },
-  input: {
-    padding: "10px",
-    margin: "8px",
-    width: "260px",
-    borderRadius: "4px",
-    border: "1px solid #ccc",
-  },
-  addBtn: {
-    padding: "10px 20px",
-    backgroundColor: "#28a745",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  backBtn: {
-    padding: "10px 20px",
-    backgroundColor: "#007bff",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
+const s={
+  ct:{padding:"1.5rem",fontFamily:"Arial"},
+  in:{display:"block",margin:"8px 0",padding:"10px",width:"260px"},
+  add:{padding:"8px 16px",background:"#28a745",color:"#fff",border:"none",borderRadius:6,cursor:"pointer"},
+  back:{padding:"8px 16px",background:"#007bff",color:"#fff",border:"none",borderRadius:6,cursor:"pointer",marginLeft:8}
 };
-
 export default AddPlan;
+

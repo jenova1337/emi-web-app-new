@@ -1,183 +1,73 @@
 import React, { useEffect, useState } from "react";
+import { auth, db } from "./firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const Profile = ({ goBack }) => {
-  const [user, setUser] = useState(null);
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({});
+  const [data,setData]=useState(null);
+  const [edit,setEdit]=useState(false);
+  const [form,setForm]=useState({});
 
-  useEffect(() => {
-    const email = localStorage.getItem("loggedInUser");
-    if (email) {
-      const storedUser = localStorage.getItem("user_" + email);
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
-        setForm(parsed);
+  useEffect(()=>{
+    const fetch=async()=>{
+      const cur=auth.currentUser;
+      if(!cur) return;
+      const snap=await getDoc(doc(db,"users",cur.uid));
+      if(snap.exists()){
+        setData(snap.data());
+        setForm(snap.data());
       }
-    }
-  }, []);
+    };
+    fetch();
+  },[]);
 
-  const handleChange = (field, value) => {
-    setForm({ ...form, [field]: value });
+  const change=(k,v)=>setForm({...form,[k]:v});
+
+  const save=async()=>{
+    await setDoc(doc(db,"users",auth.currentUser.uid),form);
+    setData(form); setEdit(false); alert("Saved!");
   };
 
-  const handleSave = () => {
-    const updatedUser = { ...form };
-    localStorage.setItem("user_" + updatedUser.email, JSON.stringify(updatedUser));
-    localStorage.setItem("loggedInUser", updatedUser.email);
-    setUser(updatedUser);
-    setEditing(false);
-    alert("Profile updated successfully!");
-  };
+  if(!data) return <p>Loading…</p>;
 
-  if (!user) return <div style={styles.loading}>Loading profile...</div>;
+  const Row=({field,label,type})=>(
+    <div><label>{label}: </label>
+      {edit && field!=="email" ? (
+        type==="select"
+          ? <select value={form.gender} onChange={e=>change("gender",e.target.value)}>
+              <option value="">--</option><option>Male</option><option>Female</option><option>Other</option>
+            </select>
+          : <input type={type} value={form[field]||""} onChange={e=>change(field,e.target.value)}/>
+      ):<span>{data[field]}</span>}
+    </div>
+  );
 
-  return (
-    <div style={styles.container}>
-      <h2>👤 Profile</h2>
-      <button onClick={goBack} style={styles.backBtn}>🔙 Back to Dashboard</button>
+  return(
+    <div style={sty.ct}>
+      <h2>Profile</h2>
+      <button style={sty.bk} onClick={goBack}>Back</button>
 
-      <div style={styles.profileBox}>
-        <div>
-          <label>Name:</label>
-          {editing ? (
-            <input
-              type="text"
-              value={form.name || ""}
-              onChange={(e) => handleChange("name", e.target.value)}
-            />
-          ) : (
-            <span>{user.name}</span>
-          )}
-        </div>
+      <div style={sty.box}>
+        <Row field="name"  label="Name"   type="text"/>
+        <Row field="age"   label="Age"    type="number"/>
+        <Row field="gender"label="Gender" type="select"/>
+        <Row field="income"label="Income" type="number"/>
+        <Row field="familyIncome"label="Family Income" type="number"/>
+        <Row field="mobile"label="Mobile" type="text"/>
+        <Row field="email" label="Email"  type="text"/>
 
-        <div>
-          <label>Email:</label>
-          <span>{user.email}</span>
-        </div>
-{/* Name row already here */}
-
-<div>
-  <label>Age:</label>
-  {editing ? (
-    <input
-      type="number"
-      value={form.age || ""}
-      onChange={(e) => handleChange("age", e.target.value)}
-    />
-  ) : (
-    <span>{user.age}</span>
-  )}
-</div>
-
-<div>
-  <label>Gender:</label>
-  {editing ? (
-    <select
-      value={form.gender || ""}
-      onChange={(e) => handleChange("gender", e.target.value)}
-    >
-      <option value="">-- select --</option>
-      <option value="Male">Male</option>
-      <option value="Female">Female</option>
-      <option value="Other">Other</option>
-    </select>
-  ) : (
-    <span>{user.gender}</span>
-  )}
-</div>
-
-<div>
-  <label>Income:</label>
-  {editing ? (
-    <input
-      type="number"
-      value={form.income || ""}
-      onChange={(e) => handleChange("income", e.target.value)}
-    />
-  ) : (
-    <span>{user.income}</span>
-  )}
-</div>
-
-<div>
-  <label>Family Income:</label>
-  {editing ? (
-    <input
-      type="number"
-      value={form.familyIncome || ""}
-      onChange={(e) => handleChange("familyIncome", e.target.value)}
-    />
-  ) : (
-    <span>{user.familyIncome}</span>
-  )}
-</div>
-
-        <div>
-          <label>Mobile:</label>
-          {editing ? (
-            <input
-              type="text"
-              value={form.mobile || ""}
-              onChange={(e) => handleChange("mobile", e.target.value)}
-            />
-          ) : (
-            <span>{user.mobile}</span>
-          )}
-        </div>
-
-        {editing ? (
-          <button onClick={handleSave} style={styles.saveBtn}>💾 Save</button>
-        ) : (
-          <button onClick={() => setEditing(true)} style={styles.editBtn}>✏️ Edit Profile</button>
-        )}
+        {edit
+          ? <button style={sty.save} onClick={save}>Save</button>
+          : <button style={sty.edit} onClick={()=>setEdit(true)}>Edit</button>}
       </div>
     </div>
   );
 };
 
-const styles = {
-  container: {
-    padding: "1rem",
-  },
-  backBtn: {
-    marginBottom: "1rem",
-    padding: "8px 16px",
-    backgroundColor: "#333",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  profileBox: {
-    backgroundColor: "#f1f1f1",
-    padding: "1rem",
-    borderRadius: "8px",
-    maxWidth: "400px",
-    lineHeight: "2rem",
-  },
-  editBtn: {
-    marginTop: "1rem",
-    backgroundColor: "#007bff",
-    color: "white",
-    padding: "6px 12px",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  saveBtn: {
-    marginTop: "1rem",
-    backgroundColor: "#28a745",
-    color: "white",
-    padding: "6px 12px",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  loading: {
-    padding: "2rem",
-    fontSize: "1.2rem",
-  },
+const sty={
+  ct:{padding:"1rem"},
+  bk:{marginBottom:"1rem"},
+  box:{background:"#f1f1f1",padding:"1rem",borderRadius:8,maxWidth:400,lineHeight:"2rem"},
+  edit:{marginTop:10,background:"#007bff",color:"#fff",padding:"6px 12px",border:"none",borderRadius:5},
+  save:{marginTop:10,background:"#28a745",color:"#fff",padding:"6px 12px",border:"none",borderRadius:5}
 };
-
 export default Profile;
