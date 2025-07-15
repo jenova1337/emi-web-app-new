@@ -56,8 +56,8 @@ const Profile = ({ goBack }) => {
 
   return (
     <div style={styles.container}>
-      <h2>👤 Profile</h2>
-      <button onClick={goBack} style={styles.backBtn}>🔙 Back to Dashboard</button>
+      <h2> Profile</h2>
+      <button onClick={goBack} style={styles.backBtn}> Back to Dashboard</button>
 
       <div style={styles.profileBox}>
         <Field label="Name"          valueKey="name" />
@@ -69,9 +69,9 @@ const Profile = ({ goBack }) => {
         <Field label="Email"         valueKey="email" />   {/* read‑only */}
 
         {editing ? (
-          <button onClick={handleSave} style={styles.saveBtn}>💾 Save</button>
+          <button onClick={handleSave} style={styles.saveBtn}> Save</button>
         ) : (
-          <button onClick={() => setEditing(true)} style={styles.editBtn} ✏️ Edit Profile</button>
+          <button onClick={() => setEditing(true)} style={styles.editBtn}  Edit Profile</button>
         )}
       </div>
     </div>
