@@ -47,7 +47,7 @@ const FinishedPlans = ({ goBack }) => {
   return (
     <div style={{ padding: "1rem" }}>
       <h2>Finished EMI Plans</h2>
-      <button onClick={goBack} style={styles.back}>Back</button>
+      <button onClick={goBack} style={styles.back}>➡️Back</button>
 
       {plans.length === 0 ? (
         <p>No finished plans yet.</p>
@@ -55,9 +55,9 @@ const FinishedPlans = ({ goBack }) => {
         plans.map((p) => (
           <div key={p.id} style={styles.card}>
             <h3>{p.title}</h3>
-            <p>Total Amount: ₹{p.totalAmount}</p>
-            <p>Total Paid: ₹{p.payments.reduce((s, x) => s + x.amount, 0)}</p>
-            <button onClick={() => downloadPdf(p)} style={styles.pdf}>Download PDF</button>
+            <p>💵Total Amount: ₹{p.totalAmount}</p>
+            <p>💰Total Paid: ₹{p.payments.reduce((s, x) => s + x.amount, 0)}</p>
+            <button onClick={() => downloadPdf(p)} style={styles.pdf}>📥Download PDF</button>
           </div>
         ))
       )}
