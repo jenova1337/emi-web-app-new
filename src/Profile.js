@@ -71,7 +71,7 @@ const Profile = ({ goBack }) => {
         {editing ? (
           <button onClick={handleSave} style={styles.saveBtn}>💾 Save</button>
         ) : (
-          <button onClick={() => setEditing(true)} style={styles.editBtn}✏️ Edit Profile</button>
+          <button onClick={() => setEditing(true)} style={styles.editBtn} ✏️ Edit Profile</button>
         )}
       </div>
     </div>
