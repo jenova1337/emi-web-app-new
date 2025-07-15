@@ -55,6 +55,63 @@ const Profile = ({ goBack }) => {
           <label>Email:</label>
           <span>{user.email}</span>
         </div>
+{/* Name row already here */}
+
+<div>
+  <label>Age:</label>
+  {editing ? (
+    <input
+      type="number"
+      value={form.age || ""}
+      onChange={(e) => handleChange("age", e.target.value)}
+    />
+  ) : (
+    <span>{user.age}</span>
+  )}
+</div>
+
+<div>
+  <label>Gender:</label>
+  {editing ? (
+    <select
+      value={form.gender || ""}
+      onChange={(e) => handleChange("gender", e.target.value)}
+    >
+      <option value="">-- select --</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+  ) : (
+    <span>{user.gender}</span>
+  )}
+</div>
+
+<div>
+  <label>Income:</label>
+  {editing ? (
+    <input
+      type="number"
+      value={form.income || ""}
+      onChange={(e) => handleChange("income", e.target.value)}
+    />
+  ) : (
+    <span>{user.income}</span>
+  )}
+</div>
+
+<div>
+  <label>Family Income:</label>
+  {editing ? (
+    <input
+      type="number"
+      value={form.familyIncome || ""}
+      onChange={(e) => handleChange("familyIncome", e.target.value)}
+    />
+  ) : (
+    <span>{user.familyIncome}</span>
+  )}
+</div>
 
         <div>
           <label>Mobile:</label>
