@@ -43,8 +43,8 @@ const Profile = ({ goBack }) => {
 
   return(
     <div style={sty.ct}>
-      <h2>Profile</h2>
-      <button style={sty.bk} onClick={goBack}>Back</button>
+      <h2>👤 Profile</h2>
+      <button style={sty.bk} onClick={goBack}>🔙 Back to Dashboard</button>
 
       <div style={sty.box}>
         <Row field="name"  label="Name"   type="text"/>
@@ -56,18 +56,55 @@ const Profile = ({ goBack }) => {
         <Row field="email" label="Email"  type="text"/>
 
         {edit
-          ? <button style={sty.save} onClick={save}>Save</button>
-          : <button style={sty.edit} onClick={()=>setEdit(true)}>Edit</button>}
+          ? <button style={sty.save} onClick={save}>💾 Save</button>
+          : <button style={sty.edit} onClick={()=>setEdit(true)}>✏️ Edit Profile</button>}
       </div>
     </div>
   );
 };
 
-const sty={
-  ct:{padding:"1rem"},
-  bk:{marginBottom:"1rem"},
-  box:{background:"#f1f1f1",padding:"1rem",borderRadius:8,maxWidth:400,lineHeight:"2rem"},
-  edit:{marginTop:10,background:"#007bff",color:"#fff",padding:"6px 12px",border:"none",borderRadius:5},
-  save:{marginTop:10,background:"#28a745",color:"#fff",padding:"6px 12px",border:"none",borderRadius:5}
+const styles = {
+  container: {
+    padding: "1rem",
+  },
+  backBtn: {
+    marginBottom: "1rem",
+    padding: "8px 16px",
+    backgroundColor: "#333",
+    color: "#fff",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+  profileBox: {
+    backgroundColor: "#f1f1f1",
+    padding: "1rem",
+    borderRadius: "8px",
+    maxWidth: "400px",
+    lineHeight: "2rem",
+  },
+  editBtn: {
+    marginTop: "1rem",
+    backgroundColor: "#007bff",
+    color: "white",
+    padding: "6px 12px",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+  saveBtn: {
+    marginTop: "1rem",
+    backgroundColor: "#28a745",
+    color: "white",
+    padding: "6px 12px",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+  loading: {
+    padding: "2rem",
+    fontSize: "1.2rem",
+  },
 };
+
 export default Profile;

@@ -1,6 +1,15 @@
-// ✅ SummaryDashboard.js - shows EMI statistics and pie chart
+// ✅ SummaryDashboard.js (Firebase version)
 import React, { useEffect, useState } from "react";
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { db, auth } from "./firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 
 const COLORS = ["#28a745", "#dc3545"];
 
@@ -8,21 +17,24 @@ export default function SummaryDashboard({ goBack }) {
   const [plans, setPlans] = useState([]);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("emiPlans")) || [];
-    setPlans(saved);
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
+    return onSnapshot(collection(db, "users", uid, "plans"), (snap) => {
+      setPlans(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
   }, []);
 
   const getTotalAmount = () => plans.reduce((sum, plan) => sum + plan.totalAmount, 0);
-  const getTotalPaid = () => plans.reduce((sum, plan) => sum + getPlanPaid(plan), 0);
   const getPlanPaid = (plan) => plan.payments?.reduce((s, p) => s + p.amount, 0) || 0;
-
+  const getTotalPaid = () => plans.reduce((sum, plan) => sum + getPlanPaid(plan), 0);
   const getTotalRemaining = () => getTotalAmount() - getTotalPaid();
+
   const getPaidThisMonth = () => {
     const today = new Date();
     const m = today.getMonth() + 1;
     const y = today.getFullYear();
     return plans.reduce((sum, plan) => {
-      return sum + (plan.payments?.filter(p => {
+      return sum + (plan.payments?.filter((p) => {
         const [d, mo, yr] = p.date.split("/").map(Number);
         return mo === m && yr === y;
       }).reduce((s, p) => s + p.amount, 0) || 0);
@@ -31,10 +43,11 @@ export default function SummaryDashboard({ goBack }) {
 
   const getNextEmiDate = () => {
     let earliest = null;
-    plans.forEach(plan => {
+    plans.forEach((plan) => {
       const start = new Date(plan.startDate.split("/").reverse().join("-"));
-      const nextMonth = start.getMonth() + (plan.payments?.filter(p => p.type === "Fixed").length || 0);
-      const next = new Date(start.setMonth(nextMonth));
+      const emiCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
+      const next = new Date(start);
+      next.setMonth(start.getMonth() + emiCount);
       if (!earliest || next < earliest) earliest = next;
     });
     return earliest ? earliest.toLocaleDateString("en-GB") : "N/A";
