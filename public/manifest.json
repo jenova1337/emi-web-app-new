@@ -1,23 +1,22 @@
 {
   "name": "EMI Tracker Pro",
   "short_name": "EMI Tracker",
+  "description": "Track your EMI plans with ease - including payments, balances, reminders, and more.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#1976d2",
+  "theme_color": "#2196f3",
   "orientation": "portrait",
-  "scope": "/",
-  "description": "Track your EMI payments easily across devices.",
   "icons": [
     {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
     },
     {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/icon-512.jpeg",
+      "type": "image/jpeg",
+      "sizes": "512x512"
     }
   ]
 }
