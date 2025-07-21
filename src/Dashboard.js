@@ -1,8 +1,23 @@
-import React from "react";
+import React, { useEffect } from "react";
+import useNetworkStatus from "./useNetworkStatus";
 
-const Dashboard = ({ onNavigate, onLogout }) => {
+export default function Dashboard({ onNavigate, onLogout }) {
+  const online = useNetworkStatus();
+
+  useEffect(() => {
+    if (!online) {
+      alert("⚠️ You're offline. Changes will sync when back online.");
+    }
+  }, [online]);
+
   return (
     <div style={styles.container}>
+      {!online && (
+        <div style={{ backgroundColor: "#ffc107", padding: "5px", color: "#000" }}>
+          ⚠️ You're offline. Changes will sync later.
+        </div>
+      )}
+
       <h2>🎉 Welcome to EMI Tracker Dashboard</h2>
       <p>➡️ Choose an option below:</p>
 
@@ -26,15 +41,15 @@ const Dashboard = ({ onNavigate, onLogout }) => {
         <small>View EMI stats and pie chart.</small>
       </div>
 
-	<div style={styles.card} onClick={() => onNavigate("finished")}>
- 	 Finished Plans<br />
- 	 <small>View closed EMI plans & download PDF logs</small>
-	</div>
+      <div style={styles.card} onClick={() => onNavigate("finished")}>
+        ✅ <strong>Finished Plans</strong><br />
+        <small>View closed EMI plans & download PDF logs</small>
+      </div>
 
       <button onClick={onLogout} style={styles.logoutBtn}>🚪 Logout</button>
     </div>
   );
-};
+}
 
 const styles = {
   container: {
@@ -62,5 +77,3 @@ const styles = {
     cursor: "pointer",
   },
 };
-
-export default Dashboard;

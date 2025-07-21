@@ -1,7 +1,7 @@
 // Import Firebase SDK functions
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -13,9 +13,17 @@ const firebaseConfig = {
   appId: "1:744538139343:web:74c881b8bacc557d59a5ba"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-// Export Firestore and Auth
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+// ✅ Enable offline sync
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code === 'failed-precondition') {
+    console.warn("Persistence failed: Multiple tabs open");
+  } else if (err.code === 'unimplemented') {
+    console.warn("Persistence not supported in this browser");
+  }
+});
+
+export { auth, db };
