@@ -1,18 +1,21 @@
-// src/firebase.js
+// Import Firebase SDK functions
 import { initializeApp } from "firebase/app";
-import { getAuth }       from "firebase/auth";
-import { getFirestore }  from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
-// ⬇️ Firebase Console → Project Settings → General → “Web app” config‑ஐ இங்கு paste செய்யவும்
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",          // ← still fake
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID",
+  apiKey: "AIzaSyACASp8Yk5l0c0AH-HJjfaBocXk_sit6WY",
+  authDomain: "emi-tracker-e3771.firebaseapp.com",
+  projectId: "emi-tracker-e3771",
+  storageBucket: "emi-tracker-e3771.appspot.com", // ✅ corrected domain
+  messagingSenderId: "744538139343",
+  appId: "1:744538139343:web:74c881b8bacc557d59a5ba"
 };
 
-const app  = initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Export Firestore and Auth
+export const db = getFirestore(app);
 export const auth = getAuth(app);
-export const db   = getFirestore(app);
