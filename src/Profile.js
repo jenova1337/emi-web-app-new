@@ -1,63 +1,85 @@
+// ✅ Profile.js (Firebase version with proper rendering)
 import React, { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
 const Profile = ({ goBack }) => {
-  const [data,setData]=useState(null);
-  const [edit,setEdit]=useState(false);
-  const [form,setForm]=useState({});
+  const [data, setData] = useState(null);
+  const [edit, setEdit] = useState(false);
+  const [form, setForm] = useState({});
 
-  useEffect(()=>{
-    const fetch=async()=>{
-      const cur=auth.currentUser;
-      if(!cur) return;
-      const snap=await getDoc(doc(db,"users",cur.uid));
-      if(snap.exists()){
+  useEffect(() => {
+    const fetch = async () => {
+      const cur = auth.currentUser;
+      if (!cur) return;
+      const snap = await getDoc(doc(db, "users", cur.uid));
+      if (snap.exists()) {
         setData(snap.data());
         setForm(snap.data());
+      } else {
+        const fallback = { name: "", age: "", gender: "", income: "", familyIncome: "", mobile: "", email: cur.email };
+        await setDoc(doc(db, "users", cur.uid), fallback);
+        setData(fallback);
+        setForm(fallback);
       }
     };
     fetch();
-  },[]);
+  }, []);
 
-  const change=(k,v)=>setForm({...form,[k]:v});
+  const change = (k, v) => setForm({ ...form, [k]: v });
 
-  const save=async()=>{
-    await setDoc(doc(db,"users",auth.currentUser.uid),form);
-    setData(form); setEdit(false); alert("Saved!");
+  const save = async () => {
+    await setDoc(doc(db, "users", auth.currentUser.uid), form);
+    setData(form);
+    setEdit(false);
+    alert("Saved!");
   };
 
-  if(!data) return <p>Loading…</p>;
+  if (!data) return <p style={styles.loading}>Loading…</p>;
 
-  const Row=({field,label,type})=>(
-    <div><label>{label}: </label>
-      {edit && field!=="email" ? (
-        type==="select"
-          ? <select value={form.gender} onChange={e=>change("gender",e.target.value)}>
-              <option value="">--</option><option>Male</option><option>Female</option><option>Other</option>
-            </select>
-          : <input type={type} value={form[field]||""} onChange={e=>change(field,e.target.value)}/>
-      ):<span>{data[field]}</span>}
+  const Row = ({ field, label, type }) => (
+    <div>
+      <label>{label}: </label>
+      {edit && field !== "email" ? (
+        type === "select" ? (
+          <select value={form.gender || ""} onChange={e => change("gender", e.target.value)}>
+            <option value="">--</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
+        ) : (
+          <input
+            type={type}
+            value={form[field] || ""}
+            onChange={e => change(field, e.target.value)}
+          />
+        )
+      ) : (
+        <span>{data[field]}</span>
+      )}
     </div>
   );
 
-  return(
-    <div style={sty.ct}>
+  return (
+    <div style={styles.container}>
       <h2>👤 Profile</h2>
-      <button style={sty.bk} onClick={goBack}>🔙 Back to Dashboard</button>
+      <button style={styles.backBtn} onClick={goBack}>🔙 Back to Dashboard</button>
 
-      <div style={sty.box}>
-        <Row field="name"  label="Name"   type="text"/>
-        <Row field="age"   label="Age"    type="number"/>
-        <Row field="gender"label="Gender" type="select"/>
-        <Row field="income"label="Income" type="number"/>
-        <Row field="familyIncome"label="Family Income" type="number"/>
-        <Row field="mobile"label="Mobile" type="text"/>
-        <Row field="email" label="Email"  type="text"/>
+      <div style={styles.profileBox}>
+        <Row field="name" label="Name" type="text" />
+        <Row field="age" label="Age" type="number" />
+        <Row field="gender" label="Gender" type="select" />
+        <Row field="income" label="Income" type="number" />
+        <Row field="familyIncome" label="Family Income" type="number" />
+        <Row field="mobile" label="Mobile" type="text" />
+        <Row field="email" label="Email" type="text" />
 
-        {edit
-          ? <button style={sty.save} onClick={save}>💾 Save</button>
-          : <button style={sty.edit} onClick={()=>setEdit(true)}>✏️ Edit Profile</button>}
+        {edit ? (
+          <button style={styles.saveBtn} onClick={save}>💾 Save</button>
+        ) : (
+          <button style={styles.editBtn} onClick={() => setEdit(true)}>✏️ Edit Profile</button>
+        )}
       </div>
     </div>
   );
