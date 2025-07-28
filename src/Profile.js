@@ -1,210 +1,103 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { auth, db } from "./firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
+import { db } from "../firebase";
+import useAuth from "../auth/useAuth";
 
-const Profile = ({ goBack }) => {
-  const [data, setData] = useState(null);
-  const [edit, setEdit] = useState(false);
+const Profile = () => {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
-    const fetch = async () => {
-      const cur = auth.currentUser;
-      if (!cur) return;
-      const snap = await getDoc(doc(db, "users", cur.uid));
-      if (snap.exists()) {
-        const userData = snap.data();
-        setData(userData);
-        setForm(userData);
-      } else {
-        const fallback = {
-          name: "",
-          age: "",
-          gender: "",
-          income: "",
-          familyIncome: "",
-          mobile: "",
-          email: cur.email,
-        };
-        await setDoc(doc(db, "users", cur.uid), fallback);
-        setData(fallback);
-        setForm(fallback);
+    const fetchProfile = async () => {
+      try {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          setProfile(userData);
+          setForm(userData); // initial set only
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
       }
     };
-    fetch();
-  }, []);
 
-  const change = useCallback((k, v) => {
-    setForm(prev => ({ ...prev, [k]: v }));
-  }, []);
+    if (user) fetchProfile();
+  }, [user]);
 
-  const save = async () => {
-    await setDoc(doc(db, "users", auth.currentUser.uid), form);
-    setData(form);
-    setEdit(false);
-    alert("Saved!");
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const docRef = doc(db, "users", user.uid);
+      await updateDoc(docRef, form);
+      setProfile(form);
+      setEditing(false);
+      alert("✅ Profile updated!");
+    } catch (err) {
+      alert("❌ Failed to update profile: " + err.message);
+    }
   };
 
   const handlePasswordChange = async () => {
     try {
-      await updatePassword(auth.currentUser, newPassword);
-      alert("Password changed successfully.");
+      await updatePassword(user, newPassword);
+      alert("✅ Password updated!");
       setNewPassword("");
-      setShowPasswordChange(false);
-    } catch (error) {
-      alert("Error: " + error.message);
+    } catch (err) {
+      alert("❌ Error: " + err.message);
     }
   };
 
-  const Row = useCallback(({ field, label, type }) => (
-    <div style={styles.row}>
-      <label>{label}: </label>
-      {edit && field !== "email" ? (
-        type === "select" ? (
-          <select
-            value={form.gender || ""}
-            onChange={(e) => change("gender", e.target.value)}
-          >
-            <option value="">--</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-        ) : (
-          <input
-            type={type}
-            value={form[field] || ""}
-            onChange={(e) => change(field, e.target.value)}
-          />
-        )
-      ) : (
-        <span>{data[field]}</span>
-      )}
-    </div>
-  ), [form, edit, data, change]);
-
-  if (!data) return <p style={styles.loading}>Loading…</p>;
+  if (!profile) return <p>Loading profile…</p>;
 
   return (
-    <div style={styles.container}>
-      <h2>👤 Profile</h2>
-      <button style={styles.backBtn} onClick={goBack}>
-        🔙 Back to Dashboard
-      </button>
+    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
+      <h2>👤 Profile Details</h2>
 
-      <div style={styles.profileBox}>
-        <Row field="name" label="Name" type="text" />
-        <Row field="age" label="Age" type="number" />
-        <Row field="gender" label="Gender" type="select" />
-        <Row field="income" label="Income" type="number" />
-        <Row field="familyIncome" label="Family Income" type="number" />
-        <Row field="mobile" label="Mobile" type="text" />
-        <Row field="email" label="Email" type="text" />
+      {editing ? (
+        <>
+          <input type="text" name="name" value={form.name || ""} onChange={handleEditChange} placeholder="Name" /><br />
+          <input type="number" name="age" value={form.age || ""} onChange={handleEditChange} placeholder="Age" /><br />
+          <input type="text" name="gender" value={form.gender || ""} onChange={handleEditChange} placeholder="Gender" /><br />
+          <input type="text" name="mobile" value={form.mobile || ""} onChange={handleEditChange} placeholder="Mobile" /><br />
+          <input type="number" name="bikeCount" value={form.bikeCount || ""} onChange={handleEditChange} placeholder="No. of Bikes" /><br />
 
-        {edit ? (
-          <button style={styles.saveBtn} onClick={save}>
-            💾 Save
-          </button>
-        ) : (
-          <>
-            <button style={styles.editBtn} onClick={() => setEdit(true)}>
-              ✏️ Edit Profile
-            </button>
-            <button
-              style={styles.passBtn}
-              onClick={() => setShowPasswordChange((v) => !v)}
-            >
-              🔐 Change Password
-            </button>
-          </>
-        )}
+          <button onClick={handleSaveProfile}>💾 Save</button>
+        </>
+      ) : (
+        <>
+          <p>🧑 Name: {profile.name || "-"}</p>
+          <p>🎂 Age: {profile.age || "-"}</p>
+          <p>⚧️ Gender: {profile.gender || "-"}</p>
+          <p>📧 Email: {profile.email || user.email}</p>
+          <p>📱 Mobile: {profile.mobile || "-"}</p>
+          <p>🏍️ Bike Count: {profile.bikeCount || "-"}</p>
 
-        {showPasswordChange && (
-          <div style={styles.passBox}>
-            <input
-              type="password"
-              placeholder="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-            <button style={styles.passSave} onClick={handlePasswordChange}>
-              ✅ Update
-            </button>
-          </div>
-        )}
+          <button onClick={() => setEditing(true)}>✏️ Edit Profile</button>
+        </>
+      )}
+
+      {/* 🔐 Change Password Section */}
+      <div style={{ marginTop: "30px" }}>
+        <h3>🔑 Change Password</h3>
+        <input
+          type="password"
+          value={newPassword}
+          placeholder="New Password"
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
+        <button onClick={handlePasswordChange}>Update Password</button>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: { padding: "1rem" },
-  backBtn: {
-    marginBottom: "1rem",
-    padding: "8px 16px",
-    backgroundColor: "#333",
-    color: "#fff",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  profileBox: {
-    backgroundColor: "#f1f1f1",
-    padding: "1rem",
-    borderRadius: "8px",
-    maxWidth: "400px",
-    lineHeight: "2rem",
-  },
-  row: {
-    marginBottom: "0.5rem",
-  },
-  editBtn: {
-    marginTop: "1rem",
-    backgroundColor: "#007bff",
-    color: "white",
-    padding: "6px 12px",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  saveBtn: {
-    marginTop: "1rem",
-    backgroundColor: "#28a745",
-    color: "white",
-    padding: "6px 12px",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  passBtn: {
-    marginTop: "1rem",
-    marginLeft: "1rem",
-    backgroundColor: "#ff9800",
-    color: "white",
-    padding: "6px 12px",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  passBox: {
-    marginTop: "1rem",
-  },
-  passSave: {
-    marginLeft: "0.5rem",
-    backgroundColor: "#17a2b8",
-    color: "white",
-    padding: "5px 10px",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-  },
-  loading: {
-    padding: "2rem",
-    fontSize: "1.2rem",
-  },
 };
 
 export default Profile;
