@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { auth, db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
@@ -7,8 +7,8 @@ const Profile = ({ goBack }) => {
   const [data, setData] = useState(null);
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({});
-  const [showChangePwd, setShowChangePwd] = useState(false);
-  const [newPwd, setNewPwd] = useState("");
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
     const fetch = async () => {
@@ -16,8 +16,9 @@ const Profile = ({ goBack }) => {
       if (!cur) return;
       const snap = await getDoc(doc(db, "users", cur.uid));
       if (snap.exists()) {
-        setData(snap.data());
-        setForm(snap.data());
+        const userData = snap.data();
+        setData(userData);
+        setForm(userData);
       } else {
         const fallback = {
           name: "",
@@ -36,38 +37,36 @@ const Profile = ({ goBack }) => {
     fetch();
   }, []);
 
-  const change = (k, v) => {
-    setForm((prev) => ({ ...prev, [k]: v }));
-  };
+  const change = useCallback((k, v) => {
+    setForm(prev => ({ ...prev, [k]: v }));
+  }, []);
 
   const save = async () => {
     await setDoc(doc(db, "users", auth.currentUser.uid), form);
     setData(form);
     setEdit(false);
-    alert("Profile saved!");
+    alert("Saved!");
   };
 
-  const changePassword = async () => {
+  const handlePasswordChange = async () => {
     try {
-      await updatePassword(auth.currentUser, newPwd);
-      alert("Password updated successfully!");
-      setNewPwd("");
-      setShowChangePwd(false);
-    } catch (err) {
-      alert("Error: " + err.message);
+      await updatePassword(auth.currentUser, newPassword);
+      alert("Password changed successfully.");
+      setNewPassword("");
+      setShowPasswordChange(false);
+    } catch (error) {
+      alert("Error: " + error.message);
     }
   };
 
-  if (!data) return <p style={styles.loading}>Loading…</p>;
-
-  const Row = ({ field, label, type }) => (
+  const Row = useCallback(({ field, label, type }) => (
     <div style={styles.row}>
-      <label>{label}:</label>
+      <label>{label}: </label>
       {edit && field !== "email" ? (
         type === "select" ? (
           <select
-            value={form[field] || ""}
-            onChange={(e) => change(field, e.target.value)}
+            value={form.gender || ""}
+            onChange={(e) => change("gender", e.target.value)}
           >
             <option value="">--</option>
             <option>Male</option>
@@ -85,7 +84,9 @@ const Profile = ({ goBack }) => {
         <span>{data[field]}</span>
       )}
     </div>
-  );
+  ), [form, edit, data, change]);
+
+  if (!data) return <p style={styles.loading}>Loading…</p>;
 
   return (
     <div style={styles.container}>
@@ -108,29 +109,29 @@ const Profile = ({ goBack }) => {
             💾 Save
           </button>
         ) : (
-          <button style={styles.editBtn} onClick={() => setEdit(true)}>
-            ✏️ Edit Profile
-          </button>
+          <>
+            <button style={styles.editBtn} onClick={() => setEdit(true)}>
+              ✏️ Edit Profile
+            </button>
+            <button
+              style={styles.passBtn}
+              onClick={() => setShowPasswordChange((v) => !v)}
+            >
+              🔐 Change Password
+            </button>
+          </>
         )}
 
-        <button
-          style={styles.changePwdBtn}
-          onClick={() => setShowChangePwd(!showChangePwd)}
-        >
-          🔐 Change Password
-        </button>
-
-        {showChangePwd && (
-          <div style={styles.changePwdBox}>
+        {showPasswordChange && (
+          <div style={styles.passBox}>
             <input
               type="password"
-              placeholder="Enter new password"
-              value={newPwd}
-              onChange={(e) => setNewPwd(e.target.value)}
-              style={styles.pwdInput}
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
             />
-            <button style={styles.saveBtn} onClick={changePassword}>
-              ✅ Update Password
+            <button style={styles.passSave} onClick={handlePasswordChange}>
+              ✅ Update
             </button>
           </div>
         )}
@@ -140,9 +141,7 @@ const Profile = ({ goBack }) => {
 };
 
 const styles = {
-  container: {
-    padding: "1rem",
-  },
+  container: { padding: "1rem" },
   backBtn: {
     marginBottom: "1rem",
     padding: "8px 16px",
@@ -160,7 +159,7 @@ const styles = {
     lineHeight: "2rem",
   },
   row: {
-    marginBottom: "0.8rem",
+    marginBottom: "0.5rem",
   },
   editBtn: {
     marginTop: "1rem",
@@ -180,24 +179,27 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer",
   },
-  changePwdBtn: {
+  passBtn: {
     marginTop: "1rem",
-    backgroundColor: "#6c757d",
+    marginLeft: "1rem",
+    backgroundColor: "#ff9800",
     color: "white",
     padding: "6px 12px",
     border: "none",
     borderRadius: "5px",
     cursor: "pointer",
   },
-  changePwdBox: {
+  passBox: {
     marginTop: "1rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
   },
-  pwdInput: {
-    padding: "8px",
-    fontSize: "1rem",
+  passSave: {
+    marginLeft: "0.5rem",
+    backgroundColor: "#17a2b8",
+    color: "white",
+    padding: "5px 10px",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
   },
   loading: {
     padding: "2rem",
