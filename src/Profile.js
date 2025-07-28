@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
-import { db } from "../firebase";
+import { db } from "./firebase";
 import useAuth from "../auth/useAuth";
 
 const Profile = () => {
