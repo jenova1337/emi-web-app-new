@@ -1,4 +1,3 @@
-// ✅ Profile.js (Firebase version with proper rendering)
 import React, { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -17,7 +16,15 @@ const Profile = ({ goBack }) => {
         setData(snap.data());
         setForm(snap.data());
       } else {
-        const fallback = { name: "", age: "", gender: "", income: "", familyIncome: "", mobile: "", email: cur.email };
+        const fallback = {
+          name: "",
+          age: "",
+          gender: "",
+          income: "",
+          familyIncome: "",
+          mobile: "",
+          email: cur.email,
+        };
         await setDoc(doc(db, "users", cur.uid), fallback);
         setData(fallback);
         setForm(fallback);
@@ -26,13 +33,27 @@ const Profile = ({ goBack }) => {
     fetch();
   }, []);
 
-  const change = (k, v) => setForm({ ...form, [k]: v });
+  const change = (k, v) => {
+    setForm((prev) => ({ ...prev, [k]: v }));
+  };
 
   const save = async () => {
     await setDoc(doc(db, "users", auth.currentUser.uid), form);
     setData(form);
     setEdit(false);
     alert("Saved!");
+  };
+
+  const handlePasswordChange = () => {
+    const email = auth.currentUser.email;
+    auth
+      .sendPasswordResetEmail(email)
+      .then(() => {
+        alert("Password reset link sent to your email.");
+      })
+      .catch((error) => {
+        alert("Error sending reset email: " + error.message);
+      });
   };
 
   if (!data) return <p style={styles.loading}>Loading…</p>;
@@ -42,7 +63,10 @@ const Profile = ({ goBack }) => {
       <label>{label}: </label>
       {edit && field !== "email" ? (
         type === "select" ? (
-          <select value={form.gender || ""} onChange={e => change("gender", e.target.value)}>
+          <select
+            value={form.gender ?? ""}
+            onChange={(e) => change("gender", e.target.value)}
+          >
             <option value="">--</option>
             <option>Male</option>
             <option>Female</option>
@@ -51,8 +75,9 @@ const Profile = ({ goBack }) => {
         ) : (
           <input
             type={type}
-            value={form[field] || ""}
-            onChange={e => change(field, e.target.value)}
+            value={form[field] ?? ""}
+            onChange={(e) => change(field, e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
           />
         )
       ) : (
@@ -64,7 +89,9 @@ const Profile = ({ goBack }) => {
   return (
     <div style={styles.container}>
       <h2>👤 Profile</h2>
-      <button style={styles.backBtn} onClick={goBack}>🔙 Back to Dashboard</button>
+      <button style={styles.backBtn} onClick={goBack}>
+        🔙 Back to Dashboard
+      </button>
 
       <div style={styles.profileBox}>
         <Row field="name" label="Name" type="text" />
@@ -76,9 +103,18 @@ const Profile = ({ goBack }) => {
         <Row field="email" label="Email" type="text" />
 
         {edit ? (
-          <button style={styles.saveBtn} onClick={save}>💾 Save</button>
+          <>
+            <button style={styles.saveBtn} onClick={save}>
+              💾 Save
+            </button>
+            <button style={styles.changePwBtn} onClick={handlePasswordChange}>
+              🔐 Change Password
+            </button>
+          </>
         ) : (
-          <button style={styles.editBtn} onClick={() => setEdit(true)}>✏️ Edit Profile</button>
+          <button style={styles.editBtn} onClick={() => setEdit(true)}>
+            ✏️ Edit Profile
+          </button>
         )}
       </div>
     </div>
@@ -116,8 +152,18 @@ const styles = {
   },
   saveBtn: {
     marginTop: "1rem",
+    marginRight: "1rem",
     backgroundColor: "#28a745",
     color: "white",
+    padding: "6px 12px",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+  changePwBtn: {
+    marginTop: "1rem",
+    backgroundColor: "#ffc107",
+    color: "#000",
     padding: "6px 12px",
     border: "none",
     borderRadius: "5px",
