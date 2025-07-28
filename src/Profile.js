@@ -59,7 +59,7 @@ const Profile = ({ goBack }) => {
     }
   };
 
-  const Row = useCallback(({ field, label, type }) => (
+  const Row = ({ field, label, type }) => (
     <div style={styles.row}>
       <label>{label}: </label>
       {edit && field !== "email" ? (
