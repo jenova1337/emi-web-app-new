@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
@@ -37,9 +37,9 @@ const Profile = ({ goBack }) => {
     fetch();
   }, []);
 
-  const change = useCallback((k, v) => {
-    setForm(prev => ({ ...prev, [k]: v }));
-  }, []);
+  const change = (k, v) => {
+    setForm((prev) => ({ ...prev, [k]: v }));
+  };
 
   const save = async () => {
     await setDoc(doc(db, "users", auth.currentUser.uid), form);
@@ -59,33 +59,6 @@ const Profile = ({ goBack }) => {
     }
   };
 
-  const Row = useCallback(({ field, label, type }) => (
-    <div style={styles.row}>
-      <label>{label}: </label>
-      {edit && field !== "email" ? (
-        type === "select" ? (
-          <select
-            value={form.gender || ""}
-            onChange={(e) => change("gender", e.target.value)}
-          >
-            <option value="">--</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-        ) : (
-          <input
-            type={type}
-            value={form[field] || ""}
-            onChange={(e) => change(field, e.target.value)}
-          />
-        )
-      ) : (
-        <span>{data[field]}</span>
-      )}
-    </div>
-  ), [form, edit, data, change]);
-
   if (!data) return <p style={styles.loading}>Loading…</p>;
 
   return (
@@ -96,13 +69,13 @@ const Profile = ({ goBack }) => {
       </button>
 
       <div style={styles.profileBox}>
-        <Row field="name" label="Name" type="text" />
-        <Row field="age" label="Age" type="number" />
-        <Row field="gender" label="Gender" type="select" />
-        <Row field="income" label="Income" type="number" />
-        <Row field="familyIncome" label="Family Income" type="number" />
-        <Row field="mobile" label="Mobile" type="text" />
-        <Row field="email" label="Email" type="text" />
+        <Row field="name" label="Name" type="text" form={form} data={data} edit={edit} change={change} />
+        <Row field="age" label="Age" type="number" form={form} data={data} edit={edit} change={change} />
+        <Row field="gender" label="Gender" type="select" form={form} data={data} edit={edit} change={change} />
+        <Row field="income" label="Income" type="number" form={form} data={data} edit={edit} change={change} />
+        <Row field="familyIncome" label="Family Income" type="number" form={form} data={data} edit={edit} change={change} />
+        <Row field="mobile" label="Mobile" type="text" form={form} data={data} edit={edit} change={change} />
+        <Row field="email" label="Email" type="text" form={form} data={data} edit={edit} change={change} />
 
         {edit ? (
           <button style={styles.saveBtn} onClick={save}>
@@ -113,14 +86,15 @@ const Profile = ({ goBack }) => {
             <button style={styles.editBtn} onClick={() => setEdit(true)}>
               ✏️ Edit Profile
             </button>
-            <button
-              style={styles.passBtn}
-              onClick={() => setShowPasswordChange((v) => !v)}
-            >
-              🔐 Change Password
-            </button>
           </>
         )}
+
+        <button
+          style={styles.passBtn}
+          onClick={() => setShowPasswordChange((v) => !v)}
+        >
+          🔐 Change Password
+        </button>
 
         {showPasswordChange && (
           <div style={styles.passBox}>
@@ -139,6 +113,33 @@ const Profile = ({ goBack }) => {
     </div>
   );
 };
+
+const Row = ({ field, label, type, form, data, edit, change }) => (
+  <div style={styles.row}>
+    <label>{label}: </label>
+    {edit && field !== "email" ? (
+      type === "select" ? (
+        <select
+          value={form[field] || ""}
+          onChange={(e) => change(field, e.target.value)}
+        >
+          <option value="">--</option>
+          <option>Male</option>
+          <option>Female</option>
+          <option>Other</option>
+        </select>
+      ) : (
+        <input
+          type={type}
+          value={form[field] || ""}
+          onChange={(e) => change(field, e.target.value)}
+        />
+      )
+    ) : (
+      <span>{data[field]}</span>
+    )}
+  </div>
+);
 
 const styles = {
   container: { padding: "1rem" },
@@ -181,7 +182,6 @@ const styles = {
   },
   passBtn: {
     marginTop: "1rem",
-    marginLeft: "1rem",
     backgroundColor: "#ff9800",
     color: "white",
     padding: "6px 12px",
