@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import React, { useEffect, useState, useCallback } from "react";
+import { auth, db } from "./firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { updatePassword } from "firebase/auth";
-import { db } from "./firebase";
-import useAuth from "./auth/useAuth";
+
 
 const Profile = () => {
   const { user } = useAuth();
