@@ -1,4 +1,3 @@
-// ✅ SummaryDashboard.js (Firebase version)
 import React, { useEffect, useState } from "react";
 import {
   PieChart,
@@ -44,11 +43,11 @@ export default function SummaryDashboard({ goBack }) {
   const getNextEmiDate = () => {
     let earliest = null;
     plans.forEach((plan) => {
-      const start = new Date(plan.startDate.split("/").reverse().join("-"));
-      const emiCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
-      const next = new Date(start);
-      next.setMonth(start.getMonth() + emiCount);
-      if (!earliest || next < earliest) earliest = next;
+      const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
+      const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
+      const nextDate = new Date(base);
+      nextDate.setMonth(nextDate.getMonth() + paidCount);
+      if (!earliest || nextDate < earliest) earliest = nextDate;
     });
     return earliest ? earliest.toLocaleDateString("en-GB") : "N/A";
   };
@@ -93,6 +92,22 @@ export default function SummaryDashboard({ goBack }) {
           </PieChart>
         </ResponsiveContainer>
       </div>
+
+      <h4 style={{ marginTop: "2rem" }}>📌 Plan-wise EMI Status</h4>
+      <ul style={styles.list}>
+        {plans.map((plan) => {
+          const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
+          const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
+          const nextDate = new Date(base);
+          nextDate.setMonth(base.getMonth() + paidCount);
+          const isOver = paidCount >= plan.months;
+          return (
+            <li key={plan.id}>
+              <strong>{plan.title}</strong>: {isOver ? `✅ EMI Over on ${nextDate.toLocaleDateString("en-GB")}` : `Next Due: ${nextDate.toLocaleDateString("en-GB")}`}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

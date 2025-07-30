@@ -7,7 +7,7 @@ const AddPlan = ({ goBack }) => {
   const [amount, setAmount] = useState("");
   const [monthly, setMonthly] = useState("");
   const [months, setMonths] = useState("");
-  const [date, setDate] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [uid, setUid] = useState(null);
 
   useEffect(() => {
@@ -27,11 +27,19 @@ const AddPlan = ({ goBack }) => {
     setAmount("");
     setMonthly("");
     setMonths("");
-    setDate("");
+    setDueDate("");
+  };
+
+  const formatDate = (inputDate) => {
+    const date = new Date(inputDate);
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
   };
 
   const handleAdd = async () => {
-    if (!title || !amount || !monthly || !months || !date) {
+    if (!title || !amount || !monthly || !months || !dueDate) {
       alert("Please fill in all fields.");
       return;
     }
@@ -41,7 +49,7 @@ const AddPlan = ({ goBack }) => {
         totalAmount: +amount,
         monthlyEmi: +monthly,
         months: +months,
-        startDate: date,
+        emiDueDate: formatDate(dueDate),
         payments: [],
         createdAt: serverTimestamp(),
       });
@@ -59,8 +67,13 @@ const AddPlan = ({ goBack }) => {
       <input style={s.in} placeholder="Total Amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
       <input style={s.in} placeholder="Monthly EMI" type="number" value={monthly} onChange={(e) => setMonthly(e.target.value)} />
       <input style={s.in} placeholder="Total Months" type="number" value={months} onChange={(e) => setMonths(e.target.value)} />
-      <input style={s.in} placeholder="Start Date (dd/mm/yyyy)" value={date} onChange={(e) => setDate(e.target.value)} />
-
+      <label>📅 Select EMI Due Date:</label>
+      <input
+        style={s.in}
+        type="date"
+        value={dueDate}
+        onChange={(e) => setDueDate(e.target.value)}
+      />
       <button style={s.add} onClick={handleAdd}>Add Plan ✅</button>
       <button style={s.back} onClick={goBack}>Back</button>
     </div>
