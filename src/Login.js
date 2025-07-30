@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "./firebase";
 
 const Login = ({ onLogin }) => {
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState("");
-  const [dob, setDob] = useState(""); // NEW
-  const [gender, setGender] = useState(""); // Changed to dropdown
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("");
   const [income, setIncome] = useState("");
   const [familyIncome, setFamilyIncome] = useState("");
   const [mobile, setMobile] = useState("");
@@ -22,65 +25,41 @@ const Login = ({ onLogin }) => {
     setPassword("");
   };
 
-  const calculateAge = (dob) => {
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
-
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!name || !dob || !gender || !income || !familyIncome || !mobile || !email || !password) {
       alert("Please fill all fields.");
       return;
     }
 
-    if (!/^[6-9]\d{9}$/.test(mobile)) {
-      alert("Please enter a valid 10-digit mobile number.");
-      return;
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = userCred.user.uid;
+
+      await setDoc(doc(db, "users", uid), {
+        name,
+        dob,
+        gender,
+        income,
+        familyIncome,
+        mobile,
+        email,
+        createdAt: new Date().toISOString(),
+      });
+
+      alert("Signup successful!");
+      onLogin();
+    } catch (err) {
+      alert("Signup failed: " + err.message);
     }
-
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      alert("Please enter a valid email address.");
-      return;
-    }
-
-    const user = {
-      name,
-      dob,
-      age: calculateAge(dob),
-      gender,
-      income,
-      familyIncome,
-      mobile,
-      email,
-      password,
-    };
-
-    localStorage.setItem("user_" + email, JSON.stringify(user));
-    localStorage.setItem("loggedInUser", email);
-    alert("Signup successful!");
-    onLogin();
   };
 
-  const handleLogin = () => {
-    const user = JSON.parse(localStorage.getItem("user_" + email));
-    if (!user) {
-      alert("User not found. Please sign up first.");
-      return;
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      onLogin();
+    } catch (err) {
+      alert("Login failed: " + err.message);
     }
-
-    if (user.password !== password) {
-      alert("Incorrect password.");
-      return;
-    }
-
-    localStorage.setItem("loggedInUser", email);
-    onLogin();
   };
 
   return (
@@ -90,14 +69,11 @@ const Login = ({ onLogin }) => {
       {isSignup && (
         <>
           <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <label>Date of Birth:</label>
-          <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
-          <label>Gender:</label>
+          <input type="date" placeholder="Date of Birth" value={dob} onChange={(e) => setDob(e.target.value)} />
           <select value={gender} onChange={(e) => setGender(e.target.value)}>
             <option value="">-- Select Gender --</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
           </select>
           <input placeholder="Income" value={income} onChange={(e) => setIncome(e.target.value)} />
           <input placeholder="Family Income" value={familyIncome} onChange={(e) => setFamilyIncome(e.target.value)} />
@@ -106,7 +82,7 @@ const Login = ({ onLogin }) => {
       )}
 
       <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
       <button onClick={isSignup ? handleSignup : handleLogin}>
         {isSignup ? "Sign Up" : "Login"}
@@ -114,7 +90,13 @@ const Login = ({ onLogin }) => {
 
       <p style={{ marginTop: "1rem" }}>
         {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
-        <span onClick={() => { setIsSignup(!isSignup); resetFields(); }} style={{ color: "blue", cursor: "pointer" }}>
+        <span
+          onClick={() => {
+            setIsSignup(!isSignup);
+            resetFields();
+          }}
+          style={{ color: "blue", cursor: "pointer" }}
+        >
           {isSignup ? "Login here" : "Sign up here"}
         </span>
       </p>
