@@ -9,11 +9,15 @@ const Profile = ({ goBack }) => {
   const [form, setForm] = useState({});
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
-      const cur = auth.currentUser;
-      if (!cur) return;
+    const unsubscribe = auth.onAuthStateChanged(async (cur) => {
+      if (!cur) {
+        alert("User not authenticated.");
+        goBack();
+        return;
+      }
       const snap = await getDoc(doc(db, "users", cur.uid));
       if (snap.exists()) {
         const userData = snap.data();
@@ -33,37 +37,16 @@ const Profile = ({ goBack }) => {
         setData(fallback);
         setForm(fallback);
       }
-    };
-    fetch();
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
   const change = (k, v) => {
     setForm((prev) => ({ ...prev, [k]: v }));
   };
 
-  const validateForm = () => {
-    const mobileRegex = /^\d{10}$/;
-    if (form.mobile && !mobileRegex.test(form.mobile)) {
-      alert("Enter valid 10-digit mobile number");
-      return false;
-    }
-    if (form.age && isNaN(form.age)) {
-      alert("Enter valid age");
-      return false;
-    }
-    if (form.income && isNaN(form.income)) {
-      alert("Enter valid income");
-      return false;
-    }
-    if (form.familyIncome && isNaN(form.familyIncome)) {
-      alert("Enter valid family income");
-      return false;
-    }
-    return true;
-  };
-
   const save = async () => {
-    if (!validateForm()) return;
     await setDoc(doc(db, "users", auth.currentUser.uid), form);
     setData(form);
     setEdit(false);
@@ -81,15 +64,12 @@ const Profile = ({ goBack }) => {
     }
   };
 
-  if (!data) return <p style={styles.loading}>Loading…</p>;
+  if (loading) return <p style={styles.loading}>Loading…</p>;
 
   return (
     <div style={styles.container}>
       <h2>👤 Profile</h2>
-      <button style={styles.backBtn} onClick={goBack}>
-        🔙 Back to Dashboard
-      </button>
-
+      <button style={styles.backBtn} onClick={goBack}>🔙 Back to Dashboard</button>
       <div style={styles.profileBox}>
         <Row field="name" label="Name" type="text" form={form} data={data} edit={edit} change={change} />
         <Row field="age" label="Age" type="number" form={form} data={data} edit={edit} change={change} />
@@ -97,24 +77,15 @@ const Profile = ({ goBack }) => {
         <Row field="income" label="Income" type="number" form={form} data={data} edit={edit} change={change} />
         <Row field="familyIncome" label="Family Income" type="number" form={form} data={data} edit={edit} change={change} />
         <Row field="mobile" label="Mobile" type="text" form={form} data={data} edit={edit} change={change} />
-        <Row field="email" label="Email" type="text" form={form} data={data} edit={false} change={change} />
+        <Row field="email" label="Email" type="text" form={form} data={data} edit={edit} change={change} />
 
         {edit ? (
-          <button style={styles.saveBtn} onClick={save}>
-            💾 Save
-          </button>
+          <button style={styles.saveBtn} onClick={save}>💾 Save</button>
         ) : (
-          <button style={styles.editBtn} onClick={() => setEdit(true)}>
-            ✏️ Edit Profile
-          </button>
+          <button style={styles.editBtn} onClick={() => setEdit(true)}>✏️ Edit Profile</button>
         )}
 
-        <button
-          style={styles.passBtn}
-          onClick={() => setShowPasswordChange((v) => !v)}
-        >
-          🔐 Change Password
-        </button>
+        <button style={styles.passBtn} onClick={() => setShowPasswordChange((v) => !v)}>🔐 Change Password</button>
 
         {showPasswordChange && (
           <div style={styles.passBox}>
@@ -124,9 +95,7 @@ const Profile = ({ goBack }) => {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
-            <button style={styles.passSave} onClick={handlePasswordChange}>
-              ✅ Update
-            </button>
+            <button style={styles.passSave} onClick={handlePasswordChange}>✅ Update</button>
           </div>
         )}
       </div>
@@ -139,21 +108,14 @@ const Row = ({ field, label, type, form, data, edit, change }) => (
     <label>{label}: </label>
     {edit && field !== "email" ? (
       type === "select" ? (
-        <select
-          value={form[field] || ""}
-          onChange={(e) => change(field, e.target.value)}
-        >
+        <select value={form[field] || ""} onChange={(e) => change(field, e.target.value)}>
           <option value="">--</option>
           <option>Male</option>
           <option>Female</option>
           <option>Other</option>
         </select>
       ) : (
-        <input
-          type={type}
-          value={form[field] || ""}
-          onChange={(e) => change(field, e.target.value)}
-        />
+        <input type={type} value={form[field] || ""} onChange={(e) => change(field, e.target.value)} />
       )
     ) : (
       <span>{data[field]}</span>

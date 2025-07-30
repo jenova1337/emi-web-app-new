@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import { auth, db } from "./firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 const Login = ({ onLogin }) => {
   const [isSignup, setIsSignup] = useState(false);
@@ -22,7 +25,7 @@ const Login = ({ onLogin }) => {
     setPassword("");
   };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!name || !age || !gender || !income || !familyIncome || !mobile || !email || !password) {
       alert("Please fill all fields.");
       return;
@@ -38,37 +41,34 @@ const Login = ({ onLogin }) => {
       return;
     }
 
-    const user = {
-      name,
-      age,
-      gender,
-      income,
-      familyIncome,
-      mobile,
-      email,
-      password,
-    };
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = userCred.user.uid;
 
-    localStorage.setItem("user_" + email, JSON.stringify(user));
-    localStorage.setItem("loggedInUser", email);
-    alert("Signup successful!");
-    onLogin();
+      await setDoc(doc(db, "users", uid), {
+        name,
+        age,
+        gender,
+        income,
+        familyIncome,
+        mobile,
+        email
+      });
+
+      alert("Signup successful!");
+      onLogin();
+    } catch (error) {
+      alert("Signup error: " + error.message);
+    }
   };
 
-  const handleLogin = () => {
-    const user = JSON.parse(localStorage.getItem("user_" + email));
-    if (!user) {
-      alert("User not found. Please sign up first.");
-      return;
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      onLogin();
+    } catch (error) {
+      alert("Login error: " + error.message);
     }
-
-    if (user.password !== password) {
-      alert("Incorrect password.");
-      return;
-    }
-
-    localStorage.setItem("loggedInUser", email);
-    onLogin();
   };
 
   return (
@@ -77,50 +77,17 @@ const Login = ({ onLogin }) => {
 
       {isSignup && (
         <>
-          <input
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            placeholder="Age"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-          />
-          <input
-            placeholder="Gender"
-            value={gender}
-            onChange={(e) => setGender(e.target.value)}
-          />
-          <input
-            placeholder="Income"
-            value={income}
-            onChange={(e) => setIncome(e.target.value)}
-          />
-          <input
-            placeholder="Family Income"
-            value={familyIncome}
-            onChange={(e) => setFamilyIncome(e.target.value)}
-          />
-          <input
-            placeholder="Mobile Number"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-          />
+          <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+          <input placeholder="Age" value={age} onChange={(e) => setAge(e.target.value)} />
+          <input placeholder="Gender" value={gender} onChange={(e) => setGender(e.target.value)} />
+          <input placeholder="Income" value={income} onChange={(e) => setIncome(e.target.value)} />
+          <input placeholder="Family Income" value={familyIncome} onChange={(e) => setFamilyIncome(e.target.value)} />
+          <input placeholder="Mobile Number" value={mobile} onChange={(e) => setMobile(e.target.value)} />
         </>
       )}
 
-      <input
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        placeholder="Password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
       <button onClick={isSignup ? handleSignup : handleLogin}>
         {isSignup ? "Sign Up" : "Login"}
