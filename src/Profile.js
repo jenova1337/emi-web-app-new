@@ -41,7 +41,29 @@ const Profile = ({ goBack }) => {
     setForm((prev) => ({ ...prev, [k]: v }));
   };
 
+  const validateForm = () => {
+    const mobileRegex = /^\d{10}$/;
+    if (form.mobile && !mobileRegex.test(form.mobile)) {
+      alert("Enter valid 10-digit mobile number");
+      return false;
+    }
+    if (form.age && isNaN(form.age)) {
+      alert("Enter valid age");
+      return false;
+    }
+    if (form.income && isNaN(form.income)) {
+      alert("Enter valid income");
+      return false;
+    }
+    if (form.familyIncome && isNaN(form.familyIncome)) {
+      alert("Enter valid family income");
+      return false;
+    }
+    return true;
+  };
+
   const save = async () => {
+    if (!validateForm()) return;
     await setDoc(doc(db, "users", auth.currentUser.uid), form);
     setData(form);
     setEdit(false);
@@ -75,18 +97,16 @@ const Profile = ({ goBack }) => {
         <Row field="income" label="Income" type="number" form={form} data={data} edit={edit} change={change} />
         <Row field="familyIncome" label="Family Income" type="number" form={form} data={data} edit={edit} change={change} />
         <Row field="mobile" label="Mobile" type="text" form={form} data={data} edit={edit} change={change} />
-        <Row field="email" label="Email" type="text" form={form} data={data} edit={edit} change={change} />
+        <Row field="email" label="Email" type="text" form={form} data={data} edit={false} change={change} />
 
         {edit ? (
           <button style={styles.saveBtn} onClick={save}>
             💾 Save
           </button>
         ) : (
-          <>
-            <button style={styles.editBtn} onClick={() => setEdit(true)}>
-              ✏️ Edit Profile
-            </button>
-          </>
+          <button style={styles.editBtn} onClick={() => setEdit(true)}>
+            ✏️ Edit Profile
+          </button>
         )}
 
         <button

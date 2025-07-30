@@ -8,13 +8,23 @@ const ExistingPlans = ({ goBack }) => {
   const [plans, setPlans] = useState([]);
 
   useEffect(() => {
-    const uid = auth.currentUser.uid;
+    const uid = auth.currentUser?.uid;
+    if (!uid) return;
     return onSnapshot(collection(db, "users", uid, "plans"), snap => {
       setPlans(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
   }, []);
 
   const sum = arr => arr.reduce((s, x) => s + x.amount, 0);
+
+  const isValidDate = (str) => {
+    const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+    if (!regex.test(str)) return false;
+    const [d, m, y] = str.split("/").map(Number);
+    const date = new Date(y, m - 1, d);
+    const now = new Date();
+    return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d && date <= now;
+  };
 
   const addPayment = async (plan, amt, type, date) => {
     const uid = auth.currentUser.uid;
@@ -29,28 +39,35 @@ const ExistingPlans = ({ goBack }) => {
       const [, cm, cy] = new Date().toLocaleDateString("en-GB").split("/").map(Number);
       return p.type === "Fixed" && m === cm && y === cy;
     });
+
     const totalPaid = sum(plan.payments || []);
     const remaining = plan.totalAmount - totalPaid;
-    if (remaining <= 0) return alert("🎉 This EMI plan is fully paid ✅. No more Fixed payments allowed.");
-    if (paidFixedThisMonth) return alert("⚠️ Fixed EMI already paid this month");
 
-    const when = prompt("Enter date (dd/mm/yyyy):", new Date().toLocaleDateString("en-GB"));
-    if (when) addPayment(plan, Math.min(plan.monthlyEmi, remaining), "Fixed", when);
+    if (remaining <= 0) return alert("🎉 This EMI plan is fully paid ✅.");
+    if (paidFixedThisMonth) return alert("⚠️ Fixed EMI already paid this month.");
+
+    const when = prompt("Enter payment date (dd/mm/yyyy):", new Date().toLocaleDateString("en-GB"));
+    if (!when || !isValidDate(when)) return alert("Invalid date format or future date. Please enter valid dd/mm/yyyy format.");
+
+    addPayment(plan, Math.min(plan.monthlyEmi, remaining), "Fixed", when);
   };
 
   const handleExcess = (plan) => {
     const totalPaid = sum(plan.payments || []);
     const remaining = plan.totalAmount - totalPaid;
-    if (remaining <= 0) return alert("🎉 This EMI plan is fully paid ✅. No further payments allowed.");
+    if (remaining <= 0) return alert("🎉 Plan already completed.");
 
     const amt = +prompt("Enter excess amount:");
-    if (!amt || amt <= 0 || amt > remaining) return;
-    const when = prompt("Enter date (dd/mm/yyyy):", new Date().toLocaleDateString("en-GB"));
-    if (when) addPayment(plan, amt, "Excess", when);
+    if (!amt || amt <= 0 || amt > remaining) return alert("Invalid amount. Must be >0 and ≤ remaining amount.");
+
+    const when = prompt("Enter payment date (dd/mm/yyyy):", new Date().toLocaleDateString("en-GB"));
+    if (!when || !isValidDate(when)) return alert("Invalid date format or future date. Use dd/mm/yyyy.");
+
+    addPayment(plan, amt, "Excess", when);
   };
 
   const delPlan = async (id) => {
-    if (window.confirm("Delete this plan?")) {
+    if (window.confirm("Are you sure to delete this plan?")) {
       await deleteDoc(doc(db, "users", auth.currentUser.uid, "plans", id));
     }
   };
@@ -70,11 +87,13 @@ const ExistingPlans = ({ goBack }) => {
             <p>✅ Total Paid: ₹{paid}</p>
             <p>📉 Remaining: ₹{remain}</p>
             {remain === 0 && <p style={{ color: "green" }}>🎉 EMI Over</p>}
+
             <button onClick={() => handleFixed(p)} style={styles.payBtn}>✅ Pay EMI</button>
             <button onClick={() => handleExcess(p)} style={styles.excessBtn}>➕ Add Excess Payment</button>
+
             <h4>📋 Payment History</h4>
             <table border="1" cellPadding="5">
-              <thead><tr><th>#</th><th>Date</th><th>Amount</th><th>Type</th><th>Total Paid</th><th>To Be Paid</th></tr></thead>
+              <thead><tr><th>#</th><th>Date</th><th>Amount</th><th>Type</th><th>Total Paid</th><th>Balance</th></tr></thead>
               <tbody>
                 {(p.payments || []).map((pay, i) => {
                   const runningTotal = p.payments.slice(0, i + 1).reduce((s, x) => s + x.amount, 0);
@@ -93,6 +112,7 @@ const ExistingPlans = ({ goBack }) => {
                 {(p.payments?.length || 0) === 0 && <tr><td colSpan="6">No payments yet</td></tr>}
               </tbody>
             </table>
+
             <button onClick={() => delPlan(p.id)} style={styles.deleteBtn}>🗑 Delete</button>
           </div>
         );
