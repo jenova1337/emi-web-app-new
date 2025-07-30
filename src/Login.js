@@ -1,13 +1,10 @@
 import React, { useState } from "react";
-import { auth, db } from "./firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
 
 const Login = ({ onLogin }) => {
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
+  const [dob, setDob] = useState(""); // NEW
+  const [gender, setGender] = useState(""); // Changed to dropdown
   const [income, setIncome] = useState("");
   const [familyIncome, setFamilyIncome] = useState("");
   const [mobile, setMobile] = useState("");
@@ -16,7 +13,7 @@ const Login = ({ onLogin }) => {
 
   const resetFields = () => {
     setName("");
-    setAge("");
+    setDob("");
     setGender("");
     setIncome("");
     setFamilyIncome("");
@@ -25,8 +22,19 @@ const Login = ({ onLogin }) => {
     setPassword("");
   };
 
-  const handleSignup = async () => {
-    if (!name || !age || !gender || !income || !familyIncome || !mobile || !email || !password) {
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const handleSignup = () => {
+    if (!name || !dob || !gender || !income || !familyIncome || !mobile || !email || !password) {
       alert("Please fill all fields.");
       return;
     }
@@ -41,34 +49,38 @@ const Login = ({ onLogin }) => {
       return;
     }
 
-    try {
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      const uid = userCred.user.uid;
+    const user = {
+      name,
+      dob,
+      age: calculateAge(dob),
+      gender,
+      income,
+      familyIncome,
+      mobile,
+      email,
+      password,
+    };
 
-      await setDoc(doc(db, "users", uid), {
-        name,
-        age,
-        gender,
-        income,
-        familyIncome,
-        mobile,
-        email
-      });
-
-      alert("Signup successful!");
-      onLogin();
-    } catch (error) {
-      alert("Signup error: " + error.message);
-    }
+    localStorage.setItem("user_" + email, JSON.stringify(user));
+    localStorage.setItem("loggedInUser", email);
+    alert("Signup successful!");
+    onLogin();
   };
 
-  const handleLogin = async () => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      onLogin();
-    } catch (error) {
-      alert("Login error: " + error.message);
+  const handleLogin = () => {
+    const user = JSON.parse(localStorage.getItem("user_" + email));
+    if (!user) {
+      alert("User not found. Please sign up first.");
+      return;
     }
+
+    if (user.password !== password) {
+      alert("Incorrect password.");
+      return;
+    }
+
+    localStorage.setItem("loggedInUser", email);
+    onLogin();
   };
 
   return (
@@ -78,8 +90,15 @@ const Login = ({ onLogin }) => {
       {isSignup && (
         <>
           <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-          <input placeholder="Age" value={age} onChange={(e) => setAge(e.target.value)} />
-          <input placeholder="Gender" value={gender} onChange={(e) => setGender(e.target.value)} />
+          <label>Date of Birth:</label>
+          <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+          <label>Gender:</label>
+          <select value={gender} onChange={(e) => setGender(e.target.value)}>
+            <option value="">-- Select Gender --</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+          </select>
           <input placeholder="Income" value={income} onChange={(e) => setIncome(e.target.value)} />
           <input placeholder="Family Income" value={familyIncome} onChange={(e) => setFamilyIncome(e.target.value)} />
           <input placeholder="Mobile Number" value={mobile} onChange={(e) => setMobile(e.target.value)} />
@@ -95,13 +114,7 @@ const Login = ({ onLogin }) => {
 
       <p style={{ marginTop: "1rem" }}>
         {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
-        <span
-          onClick={() => {
-            setIsSignup(!isSignup);
-            resetFields();
-          }}
-          style={{ color: "blue", cursor: "pointer" }}
-        >
+        <span onClick={() => { setIsSignup(!isSignup); resetFields(); }} style={{ color: "blue", cursor: "pointer" }}>
           {isSignup ? "Login here" : "Sign up here"}
         </span>
       </p>

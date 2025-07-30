@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { auth, db } from "./firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { updatePassword } from "firebase/auth";
 
 const Profile = ({ goBack }) => {
   const [data, setData] = useState(null);
@@ -9,83 +6,96 @@ const Profile = ({ goBack }) => {
   const [form, setForm] = useState({});
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [newPassword, setNewPassword] = useState("");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (cur) => {
-      if (!cur) {
-        alert("User not authenticated.");
-        goBack();
-        return;
-      }
-      const snap = await getDoc(doc(db, "users", cur.uid));
-      if (snap.exists()) {
-        const userData = snap.data();
-        setData(userData);
-        setForm(userData);
-      } else {
-        const fallback = {
-          name: "",
-          age: "",
-          gender: "",
-          income: "",
-          familyIncome: "",
-          mobile: "",
-          email: cur.email,
-        };
-        await setDoc(doc(db, "users", cur.uid), fallback);
-        setData(fallback);
-        setForm(fallback);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    const email = localStorage.getItem("loggedInUser");
+    const stored = localStorage.getItem("user_" + email);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setData(parsed);
+      setForm(parsed);
+    }
   }, []);
 
   const change = (k, v) => {
-    setForm((prev) => ({ ...prev, [k]: v }));
+    setForm(prev => ({ ...prev, [k]: v }));
   };
 
-  const save = async () => {
-    await setDoc(doc(db, "users", auth.currentUser.uid), form);
-    setData(form);
+  const save = () => {
+    const email = data.email;
+    const updated = { ...form, age: calculateAge(form.dob) };
+    localStorage.setItem("user_" + email, JSON.stringify(updated));
+    setData(updated);
+    setForm(updated);
     setEdit(false);
     alert("Saved!");
   };
 
-  const handlePasswordChange = async () => {
-    try {
-      await updatePassword(auth.currentUser, newPassword);
-      alert("Password changed successfully.");
-      setNewPassword("");
-      setShowPasswordChange(false);
-    } catch (error) {
-      alert("Error: " + error.message);
+  const calculateAge = (dob) => {
+    if (!dob) return "-";
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
     }
+    return age;
   };
 
-  if (loading) return <p style={styles.loading}>Loading…</p>;
+  const handlePasswordChange = () => {
+    if (newPassword.length < 4) {
+      alert("Password should be at least 4 characters.");
+      return;
+    }
+    const updated = { ...data, password: newPassword };
+    localStorage.setItem("user_" + data.email, JSON.stringify(updated));
+    setData(updated);
+    setNewPassword("");
+    setShowPasswordChange(false);
+    alert("Password updated.");
+  };
+
+  if (!data) return <p style={styles.loading}>Loading…</p>;
 
   return (
     <div style={styles.container}>
       <h2>👤 Profile</h2>
-      <button style={styles.backBtn} onClick={goBack}>🔙 Back to Dashboard</button>
+      <button style={styles.backBtn} onClick={goBack}>
+        🔙 Back to Dashboard
+      </button>
+
       <div style={styles.profileBox}>
         <Row field="name" label="Name" type="text" form={form} data={data} edit={edit} change={change} />
-        <Row field="age" label="Age" type="number" form={form} data={data} edit={edit} change={change} />
+        <Row field="dob" label="Date of Birth" type="date" form={form} data={data} edit={edit} change={change} />
+
+        <div style={styles.row}>
+          <label>Age: </label>
+          <span>{calculateAge(data.dob)}</span>
+        </div>
+
         <Row field="gender" label="Gender" type="select" form={form} data={data} edit={edit} change={change} />
         <Row field="income" label="Income" type="number" form={form} data={data} edit={edit} change={change} />
         <Row field="familyIncome" label="Family Income" type="number" form={form} data={data} edit={edit} change={change} />
         <Row field="mobile" label="Mobile" type="text" form={form} data={data} edit={edit} change={change} />
-        <Row field="email" label="Email" type="text" form={form} data={data} edit={edit} change={change} />
+        <Row field="email" label="Email" type="text" form={form} data={data} edit={false} change={change} />
 
         {edit ? (
-          <button style={styles.saveBtn} onClick={save}>💾 Save</button>
+          <button style={styles.saveBtn} onClick={save}>
+            💾 Save
+          </button>
         ) : (
-          <button style={styles.editBtn} onClick={() => setEdit(true)}>✏️ Edit Profile</button>
+          <button style={styles.editBtn} onClick={() => setEdit(true)}>
+            ✏️ Edit Profile
+          </button>
         )}
 
-        <button style={styles.passBtn} onClick={() => setShowPasswordChange((v) => !v)}>🔐 Change Password</button>
+        <button
+          style={styles.passBtn}
+          onClick={() => setShowPasswordChange(v => !v)}
+        >
+          🔐 Change Password
+        </button>
 
         {showPasswordChange && (
           <div style={styles.passBox}>
@@ -95,7 +105,9 @@ const Profile = ({ goBack }) => {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
-            <button style={styles.passSave} onClick={handlePasswordChange}>✅ Update</button>
+            <button style={styles.passSave} onClick={handlePasswordChange}>
+              ✅ Update
+            </button>
           </div>
         )}
       </div>
@@ -115,7 +127,11 @@ const Row = ({ field, label, type, form, data, edit, change }) => (
           <option>Other</option>
         </select>
       ) : (
-        <input type={type} value={form[field] || ""} onChange={(e) => change(field, e.target.value)} />
+        <input
+          type={type}
+          value={form[field] || ""}
+          onChange={(e) => change(field, e.target.value)}
+        />
       )
     ) : (
       <span>{data[field]}</span>
