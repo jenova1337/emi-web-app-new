@@ -41,17 +41,24 @@ export default function SummaryDashboard({ goBack }) {
   };
 
   const getNextEmiDate = () => {
-    let earliest = null;
-    plans.forEach((plan) => {
-      const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
-      const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
-      const nextDate = new Date(base);
-      nextDate.setMonth(nextDate.getMonth() + paidCount);
-      const isOver = paidCount >= plan.months;
-      if (!isOver && (!earliest || nextDate < earliest)) earliest = nextDate;
-    });
-    return earliest ? earliest.toLocaleDateString("en-GB") : "🎉 All EMIs Over";
-  };
+  let nextDates = [];
+
+  plans.forEach((plan) => {
+    const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
+    const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
+    const nextDate = new Date(base);
+    nextDate.setMonth(nextDate.getMonth() + paidCount);
+
+    const isOver = paidCount >= plan.months;
+    if (!isOver) nextDates.push(nextDate);
+  });
+
+  if (nextDates.length === 0) return "🎉 All EMIs Over";
+
+  const earliest = nextDates.reduce((min, curr) => (curr < min ? curr : min), nextDates[0]);
+  return earliest.toLocaleDateString("en-GB");
+};
+
 
   const pieData = [
     { name: "Paid", value: getTotalPaid() },
