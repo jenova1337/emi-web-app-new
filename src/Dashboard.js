@@ -46,6 +46,12 @@ export default function Dashboard({ onNavigate, onLogout }) {
         <small>View closed EMI plans & download PDF logs</small>
       </div>
 
+	<div style={{ ...styles.card, backgroundColor: "#e6f7ff" }} onClick={() => onNavigate("monthsummary")}>
+ 	 📆 <strong>Monthly EMI Summary</strong><br />
+	  <small>Month-wise EMI breakdown.</small>
+	</div>
+
+
       <button onClick={onLogout} style={styles.logoutBtn}>🚪 Logout</button>
     </div>
   );

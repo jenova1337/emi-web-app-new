@@ -23,15 +23,9 @@ export default function SummaryDashboard({ goBack }) {
     });
   }, []);
 
-  const getTotalAmount = () =>
-    plans.reduce((sum, plan) => sum + plan.totalAmount, 0);
-
-  const getPlanPaid = (plan) =>
-    plan.payments?.reduce((s, p) => s + p.amount, 0) || 0;
-
-  const getTotalPaid = () =>
-    plans.reduce((sum, plan) => sum + getPlanPaid(plan), 0);
-
+  const getTotalAmount = () => plans.reduce((sum, plan) => sum + plan.totalAmount, 0);
+  const getPlanPaid = (plan) => plan.payments?.reduce((s, p) => s + p.amount, 0) || 0;
+  const getTotalPaid = () => plans.reduce((sum, plan) => sum + getPlanPaid(plan), 0);
   const getTotalRemaining = () => getTotalAmount() - getTotalPaid();
 
   const getPaidThisMonth = () => {
@@ -39,41 +33,26 @@ export default function SummaryDashboard({ goBack }) {
     const m = today.getMonth() + 1;
     const y = today.getFullYear();
     return plans.reduce((sum, plan) => {
-      return (
-        sum +
-        (plan.payments
-          ?.filter((p) => {
-            const [d, mo, yr] = p.date.split("/").map(Number);
-            return mo === m && yr === y;
-          })
-          .reduce((s, p) => s + p.amount, 0) || 0)
-      );
+      return sum + (plan.payments?.filter((p) => {
+        const [d, mo, yr] = p.date.split("/").map(Number);
+        return mo === m && yr === y;
+      }).reduce((s, p) => s + p.amount, 0) || 0);
     }, 0);
   };
 
-  // ✅ New logic to get either next EMI due or EMI over date
   const getNextEmiDate = () => {
     let earliest = null;
     plans.forEach((plan) => {
       const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
-      const fixedPayments = plan.payments?.filter((p) => p.type === "Fixed") || [];
-      const paidCount = fixedPayments.length;
+      const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
       const nextDate = new Date(base);
       nextDate.setMonth(nextDate.getMonth() + paidCount);
-      if (paidCount >= plan.months) {
-        // EMI Over: take last fixed payment date
-        const lastPayment = fixedPayments[paidCount - 1];
-        if (lastPayment) {
-          const [d, m, y] = lastPayment.date.split("/").map(Number);
-          const emiOverDate = new Date(`${y}-${m}-${d}`);
-          if (!earliest || emiOverDate < earliest) earliest = emiOverDate;
-        }
-      } else {
-        if (!earliest || nextDate < earliest) earliest = nextDate;
+      const isOver = paidCount >= plan.months;
+      if (!isOver && (!earliest || nextDate < earliest)) {
+        earliest = nextDate;
       }
     });
-    if (!earliest) return "N/A";
-    return earliest.toLocaleDateString("en-GB");
+    return earliest ? earliest.toLocaleDateString("en-GB") : "✅ All EMIs Over";
   };
 
   const pieData = [
@@ -84,31 +63,18 @@ export default function SummaryDashboard({ goBack }) {
   return (
     <div style={styles.container}>
       <h2>📊 EMI Summary</h2>
-      <button onClick={goBack} style={styles.backBtn}>
-        🔙 Back to Dashboard
-      </button>
+      <button onClick={goBack} style={styles.backBtn}>🔙 Back to Dashboard</button>
 
       <ul style={styles.list}>
-        <li>
-          <strong>💼 Total Plans:</strong> {plans.length}
-        </li>
-        <li>
-          <strong>💰 Total Amount:</strong> ₹{getTotalAmount()}
-        </li>
-        <li>
-          <strong>💸 Total Paid:</strong> ₹{getTotalPaid()}
-        </li>
-        <li>
-          <strong>📉 Remaining Balance:</strong> ₹{getTotalRemaining()}
-        </li>
-        <li>
-          <strong>📅 Next EMI Due:</strong> {getNextEmiDate()}
-        </li>
-        <li>
-          <strong>🔄 EMI Paid This Month:</strong> ₹{getPaidThisMonth()}
-        </li>
+        <li><strong>💼 Total Plans:</strong> {plans.length}</li>
+        <li><strong>💰 Total Amount:</strong> ₹{getTotalAmount()}</li>
+        <li><strong>💸 Total Paid:</strong> ₹{getTotalPaid()}</li>
+        <li><strong>📉 Remaining Balance:</strong> ₹{getTotalRemaining()}</li>
+        <li><strong>📅 Next EMI Due:</strong> {getNextEmiDate()}</li>
+        <li><strong>🔄 EMI Paid This Month:</strong> ₹{getPaidThisMonth()}</li>
       </ul>
 
+      <h4>📈 Overall EMI Status</h4>
       <div style={{ width: "100%", height: 300 }}>
         <ResponsiveContainer>
           <PieChart>
@@ -122,10 +88,7 @@ export default function SummaryDashboard({ goBack }) {
               label
             >
               {pieData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip />
@@ -138,23 +101,44 @@ export default function SummaryDashboard({ goBack }) {
       <ul style={styles.list}>
         {plans.map((plan) => {
           const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
-          const fixedPayments = plan.payments?.filter((p) => p.type === "Fixed") || [];
-          const paidCount = fixedPayments.length;
-          const isOver = paidCount >= plan.months;
-
+          const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
           const nextDate = new Date(base);
           nextDate.setMonth(base.getMonth() + paidCount);
+          const isOver = paidCount >= plan.months;
+
+          const planPieData = [
+            { name: "Paid", value: getPlanPaid(plan) },
+            { name: "Remaining", value: plan.totalAmount - getPlanPaid(plan) }
+          ];
 
           return (
             <li key={plan.id}>
-              <strong>{plan.title}</strong>:{" "}
-              {isOver
-                ? `✅ EMI Over on ${
-                    fixedPayments.length
-                      ? fixedPayments[fixedPayments.length - 1].date
-                      : "N/A"
-                  }`
-                : `Next Due: ${nextDate.toLocaleDateString("en-GB")}`}
+              <strong>{plan.title}</strong>: {isOver
+                ? `✅ EMI Over on ${nextDate.toLocaleDateString("en-GB")}`
+                : `Next Due: ${nextDate.toLocaleDateString("en-GB")}`
+              }
+
+              <div style={{ width: "100%", height: 250 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={planPieData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      label
+                    >
+                      {planPieData.map((entry, idx) => (
+                        <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </li>
           );
         })}
