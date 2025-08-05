@@ -1,62 +1,84 @@
 import React, { useState, useEffect } from "react";
-import Login from "./Login";
 import Dashboard from "./Dashboard";
 import AddPlan from "./AddPlan";
 import ExistingPlans from "./ExistingPlans";
-import FinishedPlans from "./FinishedPlans";
-import SummaryDashboard from "./SummaryDashboard";
 import Profile from "./Profile";
-import MonthWiseEmiSummary from "./MonthWiseEmiSummary"; // ✅ Import added
-import { auth } from "./firebase";
+import Login from "./Login";
+import SummaryDashboard from "./SummaryDashboard";
+import FinishedPlans from "./FinishedPlans";
+import MonthWiseEmiSummary from "./MonthWiseEmiSummary"; // ✅ Add this line
 
-function App() {
-  const [user, setUser] = useState(null);
-  const [selectedTab, setSelectedTab] = useState("dashboard");
+const App = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [view, setView] = useState("dashboard");
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-    });
-    return () => unsubscribe();
+    const user = localStorage.getItem("loggedInUser");
+    if (user) setIsLoggedIn(true);
   }, []);
 
   const handleLogout = () => {
-    auth.signOut();
+    localStorage.removeItem("loggedInUser");
+    setIsLoggedIn(false);
+    setView("dashboard");
   };
 
-  if (!user) {
-    return <Login />;
+  if (!isLoggedIn) {
+    return <Login onLogin={() => setIsLoggedIn(true)} />;
   }
 
-  return (
-    <div
-      style={{
-        backgroundImage: "linear-gradient(to right, #dfe9f3 0%, white 100%)",
-        minHeight: "100vh",
-        padding: "10px",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-around", marginBottom: "10px" }}>
-        <button onClick={() => setSelectedTab("dashboard")}>🏠 Dashboard</button>
-        <button onClick={() => setSelectedTab("addPlan")}>➕ Add Plan</button>
-        <button onClick={() => setSelectedTab("existingPlans")}>📋 Existing Plans</button>
-        <button onClick={() => setSelectedTab("finishedPlans")}>✅ Finished Plans</button>
-        <button onClick={() => setSelectedTab("summary")}>📊 Summary</button>
-        <button onClick={() => setSelectedTab("monthSummary")}>📅 Monthly Summary</button> {/* ✅ New tab */}
-        <button onClick={() => setSelectedTab("profile")}>👤 Profile</button>
-        <button onClick={handleLogout}>🚪 Logout</button>
-      </div>
+  const renderView = () => {
+    switch (view) {
+      case "add":
+        return <AddPlan goBack={() => setView("dashboard")} />;
 
-      {/* Main tab content rendering */}
-      {selectedTab === "dashboard" && <Dashboard onTabChange={setSelectedTab} />}
-      {selectedTab === "addPlan" && <AddPlan />}
-      {selectedTab === "existingPlans" && <ExistingPlans />}
-      {selectedTab === "finishedPlans" && <FinishedPlans />}
-      {selectedTab === "summary" && <SummaryDashboard />}
-      {selectedTab === "monthSummary" && <MonthWiseEmiSummary />} {/* ✅ New component */}
-      {selectedTab === "profile" && <Profile />}
-    </div>
-  );
-}
+      case "existing":
+        return <ExistingPlans goBack={() => setView("dashboard")} />;
+
+      case "profile":
+        return (
+          <>
+            <Profile goBack={() => setView("dashboard")} />
+            <button onClick={handleLogout} style={styles.logoutBtn}>
+              🚪 Logout
+            </button>
+          </>
+        );
+
+      case "summary":
+        return <SummaryDashboard goBack={() => setView("dashboard")} />;
+
+      case "finished":
+        return <FinishedPlans goBack={() => setView("dashboard")} />;
+
+      case "monthsummary": // ✅ Add this block
+        return <MonthWiseEmiSummary goBack={() => setView("dashboard")} />;
+
+      default:
+        return (
+          <Dashboard
+            onNavigate={setView}
+            onLogout={handleLogout}
+          />
+        );
+    }
+  };
+
+  return <div>{renderView()}</div>;
+};
+
+const styles = {
+  logoutBtn: {
+    marginTop: "20px",
+    backgroundColor: "#dc3545",
+    color: "#fff",
+    padding: "10px 15px",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    float: "right",
+    marginRight: "20px",
+  },
+};
 
 export default App;
