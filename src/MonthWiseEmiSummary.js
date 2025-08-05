@@ -83,6 +83,21 @@ const MonthWiseEmiSummary = () => {
 
   return (
     <div style={{ padding: "20px" }}>
+<button
+  onClick={() => window.history.back()}
+  style={{
+    marginBottom: "20px",
+    padding: "10px 16px",
+    backgroundColor: "#28a745",
+    color: "white",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer"
+  }}
+>
+  🔙 Back to Dashboard
+</button>
+
       <h2>📅 Month-wise EMI Summary</h2>
 
       {Object.keys(monthWiseSummary).length === 0 && (
