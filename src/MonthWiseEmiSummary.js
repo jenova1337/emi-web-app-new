@@ -1,144 +1,112 @@
-import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db, auth } from "../firebase";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// src/MonthWiseEmiSummary.js
+import React, { useEffect, useState } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db, auth } from './firebase';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { format, parse } from 'date-fns';
 
 const MonthWiseEmiSummary = () => {
-  const [monthWiseSummary, setMonthWiseSummary] = useState({});
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const groupByMonth = (entries) => {
+    const map = {};
+
+    entries.forEach((entry) => {
+      if (!entry.date || isNaN(Date.parse(entry.date))) return;
+
+      const date = new Date(entry.date);
+      const month = format(date, 'MMM yyyy');
+
+      if (!map[month]) {
+        map[month] = 0;
+      }
+
+      map[month] += parseFloat(entry.amount || 0);
+    });
+
+    const result = Object.keys(map).map((month) => ({
+      month,
+      totalPaid: map[month],
+    }));
+
+    // Sort by date
+    result.sort((a, b) => {
+      const aDate = parse(`01 ${a.month}`, 'dd MMM yyyy', new Date());
+      const bDate = parse(`01 ${b.month}`, 'dd MMM yyyy', new Date());
+      return aDate - bDate;
+    });
+
+    return result;
+  };
 
   useEffect(() => {
-    if (auth.currentUser) {
-      fetchEmiPlans();
-    }
+    const fetchEMIData = async () => {
+      try {
+        const uid = auth.currentUser?.uid;
+        if (!uid) return;
+
+        const plansSnapshot = await getDocs(query(collection(db, 'plans'), where('userId', '==', uid)));
+        const allPayments = [];
+
+        plansSnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.payments && Array.isArray(data.payments)) {
+            allPayments.push(...data.payments);
+          }
+        });
+
+        const groupedData = groupByMonth(allPayments);
+        setMonthlyData(groupedData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching EMI data:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchEMIData();
   }, []);
 
-  const fetchEmiPlans = async () => {
-    const uid = auth.currentUser.uid;
-    const querySnapshot = await getDocs(collection(db, "users", uid, "plans"));
-    const plans = [];
-    querySnapshot.forEach((doc) => plans.push(doc.data()));
-    processMonthWiseData(plans);
-  };
-
-  const processMonthWiseData = (plans) => {
-    const summary = {};
-
-    plans.forEach((plan) => {
-      if (Array.isArray(plan.payments)) {
-        plan.payments.forEach((payment) => {
-          const [d, m, y] = payment.date.split("/").map(Number);
-          const monthKey = `${y}-${String(m).padStart(2, "0")}`;
-          if (!summary[monthKey]) {
-            summary[monthKey] = { total: 0 };
-          }
-          summary[monthKey].total += payment.amount || 0;
-        });
-      }
-    });
-
-    const sorted = Object.keys(summary)
-      .sort((a, b) => (a < b ? 1 : -1))
-      .reduce((acc, key) => {
-        acc[key] = summary[key];
-        return acc;
-      }, {});
-
-    setMonthWiseSummary(sorted);
-  };
-
-  const formatMonth = (key) => {
-    const [year, month] = key.split("-");
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    return `${monthNames[parseInt(month) - 1]} ${year}`;
-  };
-
-  const downloadMonthWisePDF = () => {
-    if (Object.keys(monthWiseSummary).length === 0) {
-      alert("No EMI data to download!");
-      return;
-    }
-
-    const doc = new jsPDF();
-    doc.text("Month-wise EMI Payment Summary", 14, 10);
-
-    const rows = Object.entries(monthWiseSummary).map(([month, data], index) => [
-      index + 1,
-      formatMonth(month),
-      `₹${data.total.toFixed(2)}`
-    ]);
-
-    autoTable(doc, {
-      startY: 20,
-      head: [["S.No", "Month", "Total EMI Paid"]],
-      body: rows,
-      theme: "grid",
-    });
-
-    doc.save("EMI_MonthWise_Summary.pdf");
-  };
+  if (loading) return <div className="p-4 text-lg">Loading Month-wise Summary...</div>;
 
   return (
-    <div style={{ padding: "20px" }}>
-<button
-  onClick={() => window.history.back()}
-  style={{
-    marginBottom: "20px",
-    padding: "10px 16px",
-    backgroundColor: "#28a745",
-    color: "white",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer"
-  }}
->
-  🔙 Back to Dashboard
-</button>
+    <div className="p-4">
+      <h2 className="text-2xl font-semibold mb-4">📅 Monthly EMI Summary</h2>
 
-      <h2>📅 Month-wise EMI Summary</h2>
-
-      {Object.keys(monthWiseSummary).length === 0 && (
-        <p>📭 No EMI data available.</p>
-      )}
-
-      {Object.keys(monthWiseSummary).length > 0 && (
+      {monthlyData.length === 0 ? (
+        <p>No EMI data available.</p>
+      ) : (
         <>
-          <table border="1" cellPadding="6">
-            <thead>
-              <tr>
-                <th>S.No</th>
-                <th>Month</th>
-                <th>Total EMI Paid</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(monthWiseSummary).map(([month, data], index) => (
-                <tr key={month}>
-                  <td>{index + 1}</td>
-                  <td>{formatMonth(month)}</td>
-                  <td>₹{data.total.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="totalPaid" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
 
-          <button
-            onClick={downloadMonthWisePDF}
-            style={{
-              marginTop: "15px",
-              padding: "10px 16px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer"
-            }}
-          >
-            📄 Download PDF
-          </button>
+          <div className="mt-6">
+            <h3 className="text-xl font-semibold mb-2">📊 Detailed Breakdown</h3>
+            <table className="w-full border">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border px-4 py-2">Month</th>
+                  <th className="border px-4 py-2">Total EMI Paid</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyData.map((item, idx) => (
+                  <tr key={idx}>
+                    <td className="border px-4 py-2">{item.month}</td>
+                    <td className="border px-4 py-2">₹{item.totalPaid.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </div>
