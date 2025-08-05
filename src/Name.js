@@ -1,4 +1,3 @@
-// src/Name.js
 import React from "react";
 
 const Name = ({ goBack }) => {

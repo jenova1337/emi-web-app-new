@@ -6,8 +6,8 @@ import Profile from "./Profile";
 import Login from "./Login";
 import SummaryDashboard from "./SummaryDashboard";
 import FinishedPlans from "./FinishedPlans";
-import MonthWiseEmiSummary from "./MonthWiseEmiSummary"; // ✅ Add this line
-import Name from "./Name"; // ✅ NEW import
+import MonthWiseEmiSummary from "./MonthWiseEmiSummary";
+import Name from "./Name";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,10 +32,8 @@ const App = () => {
     switch (view) {
       case "add":
         return <AddPlan goBack={() => setView("dashboard")} />;
-
       case "existing":
         return <ExistingPlans goBack={() => setView("dashboard")} />;
-
       case "profile":
         return (
           <>
@@ -45,18 +43,14 @@ const App = () => {
             </button>
           </>
         );
-
       case "summary":
         return <SummaryDashboard goBack={() => setView("dashboard")} />;
-
       case "finished":
         return <FinishedPlans goBack={() => setView("dashboard")} />;
-
-      case "monthsummary": // ✅ Add this block
+      case "monthsummary":
         return <MonthWiseEmiSummary goBack={() => setView("dashboard")} />;
-case "name":
-  return <Name goBack={() => setView("dashboard")} />;
-
+      case "name":
+        return <Name goBack={() => setView("dashboard")} />;
       default:
         return (
           <Dashboard
