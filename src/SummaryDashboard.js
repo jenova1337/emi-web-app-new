@@ -47,9 +47,10 @@ export default function SummaryDashboard({ goBack }) {
       const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
       const nextDate = new Date(base);
       nextDate.setMonth(nextDate.getMonth() + paidCount);
-      if (!earliest || nextDate < earliest) earliest = nextDate;
+      const isOver = paidCount >= plan.months;
+      if (!isOver && (!earliest || nextDate < earliest)) earliest = nextDate;
     });
-    return earliest ? earliest.toLocaleDateString("en-GB") : "N/A";
+    return earliest ? earliest.toLocaleDateString("en-GB") : "🎉 All EMIs Over";
   };
 
   const pieData = [
@@ -101,9 +102,41 @@ export default function SummaryDashboard({ goBack }) {
           const nextDate = new Date(base);
           nextDate.setMonth(base.getMonth() + paidCount);
           const isOver = paidCount >= plan.months;
+          const paid = getPlanPaid(plan);
+          const remaining = plan.totalAmount - paid;
+
+          const individualPie = [
+            { name: "Paid", value: paid },
+            { name: "Remaining", value: remaining },
+          ];
+
           return (
-            <li key={plan.id}>
-              <strong>{plan.title}</strong>: {isOver ? `✅ EMI Over on ${nextDate.toLocaleDateString("en-GB")}` : `Next Due: ${nextDate.toLocaleDateString("en-GB")}`}
+            <li key={plan.id} style={{ marginBottom: "1rem" }}>
+              <strong>{plan.title}</strong>: {isOver
+                ? `🎉 EMI Over`
+                : `📅 Next Due: ${nextDate.toLocaleDateString("en-GB")}`}
+
+              <div style={{ width: "100%", height: 200 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={individualPie}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      label
+                    >
+                      {individualPie.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </li>
           );
         })}
