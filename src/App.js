@@ -7,6 +7,7 @@ import Login from "./Login";
 import SummaryDashboard from "./SummaryDashboard";
 import FinishedPlans from "./FinishedPlans";
 import MonthWiseEmiSummary from "./MonthWiseEmiSummary"; // ✅ Add this line
+import Name from "./Name"; // ✅ NEW import
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -53,6 +54,8 @@ const App = () => {
 
       case "monthsummary": // ✅ Add this block
         return <MonthWiseEmiSummary goBack={() => setView("dashboard")} />;
+case "name":
+  return <Name goBack={() => setView("dashboard")} />;
 
       default:
         return (

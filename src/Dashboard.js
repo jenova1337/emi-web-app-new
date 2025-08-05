@@ -80,6 +80,15 @@ export default function Dashboard({ onNavigate, onLogout }) {
         📆 <strong>Monthly EMI Summary</strong><br />
         <small>Month-wise EMI breakdown.</small>
       </div>
+<div
+  style={styles.card}
+  onClick={() => onNavigate("name")}
+  onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+  onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}>
+  📝 <strong>App Name</strong><br />
+  <small>Just a dummy tab to show app name.</small>
+</div>
+
 
       <button onClick={onLogout} style={styles.logoutBtn}>
         🚪 Logout
