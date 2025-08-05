@@ -6,8 +6,6 @@ import Profile from "./Profile";
 import Login from "./Login";
 import SummaryDashboard from "./SummaryDashboard";
 import FinishedPlans from "./FinishedPlans";
-import MonthWiseEmiSummary from "./MonthWiseEmiSummary";
-import Name from "./Name";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -47,10 +45,6 @@ const App = () => {
         return <SummaryDashboard goBack={() => setView("dashboard")} />;
       case "finished":
         return <FinishedPlans goBack={() => setView("dashboard")} />;
-      case "monthsummary":
-        return <MonthWiseEmiSummary goBack={() => setView("dashboard")} />;
-      case "name":
-        return <Name goBack={() => setView("dashboard")} />;
       default:
         return (
           <Dashboard
