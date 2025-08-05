@@ -51,48 +51,43 @@ export default function SummaryDashboard({ goBack }) {
     }, 0);
   };
 
+  // ✅ Updated logic for Next EMI or EMI Over
   const getNextEmiDate = () => {
-    let earliest = null;
-    let found = false;
+    let nextDates = [];
 
     plans.forEach((plan) => {
-      const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
-      const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
+      const fixedPayments = plan.payments?.filter((p) => p.type === "Fixed") || [];
+      const baseDate = new Date(plan.emiDueDate.split("/").reverse().join("-"));
 
-      const nextDate = new Date(base);
-      nextDate.setMonth(base.getMonth() + paidCount);
-
-      const isOver = paidCount >= plan.months;
-
-      if (!isOver) {
-        if (!earliest || nextDate < earliest) {
-          earliest = nextDate;
-          found = true;
-        }
+      if (fixedPayments.length >= plan.months) {
+        // EMI is over, get last payment date
+        const lastPayment = fixedPayments[fixedPayments.length - 1];
+        nextDates.push({ isOver: true, date: lastPayment.date });
+      } else {
+        const nextDate = new Date(baseDate);
+        nextDate.setMonth(nextDate.getMonth() + fixedPayments.length);
+        nextDates.push({ isOver: false, date: nextDate.toLocaleDateString("en-GB") });
       }
     });
 
-    if (found && earliest) {
+    const allOver = nextDates.every((d) => d.isOver);
+
+    if (allOver) {
+      // get latest over date
+      const overDates = nextDates.map((d) => {
+        const [day, month, year] = d.date.split("/").map(Number);
+        return new Date(year, month - 1, day);
+      });
+      const latest = new Date(Math.max(...overDates));
+      return `EMI Over on ${latest.toLocaleDateString("en-GB")}`;
+    } else {
+      // get earliest due date among ongoing plans
+      const dueDates = nextDates
+        .filter((d) => !d.isOver)
+        .map((d) => new Date(d.date.split("/").reverse().join("-")));
+      const earliest = new Date(Math.min(...dueDates));
       return earliest.toLocaleDateString("en-GB");
     }
-
-    // All EMIs over — find latest EMI over date
-    let lastDate = null;
-    plans.forEach((plan) => {
-      const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
-      const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
-      const isOver = paidCount >= plan.months;
-
-      if (isOver) {
-        const overDate = new Date(base);
-        overDate.setMonth(base.getMonth() + plan.months - 1);
-        if (!lastDate || overDate > lastDate) {
-          lastDate = overDate;
-        }
-      }
-    });
-
-    return lastDate ? `✅ EMI Over on ${lastDate.toLocaleDateString("en-GB")}` : "N/A";
   };
 
   const pieData = [
@@ -129,10 +124,7 @@ export default function SummaryDashboard({ goBack }) {
               label
             >
               {pieData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip />
@@ -145,20 +137,25 @@ export default function SummaryDashboard({ goBack }) {
       <ul style={styles.list}>
         {plans.map((plan) => {
           const base = new Date(plan.emiDueDate.split("/").reverse().join("-"));
-          const paidCount =
-            plan.payments?.filter((p) => p.type === "Fixed").length || 0;
-          const nextDate = new Date(base);
-          nextDate.setMonth(base.getMonth() + paidCount);
-          const isOver = paidCount >= plan.months;
+          const fixedPaid = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
+          const isOver = fixedPaid >= plan.months;
 
-          return (
-            <li key={plan.id}>
-              <strong>{plan.title}</strong>:{" "}
-              {isOver
-                ? `✅ EMI Over on ${nextDate.toLocaleDateString("en-GB")}`
-                : `Next Due: ${nextDate.toLocaleDateString("en-GB")}`}
-            </li>
-          );
+          if (isOver) {
+            const lastPayment = plan.payments?.filter(p => p.type === "Fixed").slice(-1)[0];
+            return (
+              <li key={plan.id}>
+                <strong>{plan.title}</strong>: ✅ EMI Over on {lastPayment?.date || "N/A"}
+              </li>
+            );
+          } else {
+            const nextDate = new Date(base);
+            nextDate.setMonth(base.getMonth() + fixedPaid);
+            return (
+              <li key={plan.id}>
+                <strong>{plan.title}</strong>: Next Due: {nextDate.toLocaleDateString("en-GB")}
+              </li>
+            );
+          }
         })}
       </ul>
     </div>
