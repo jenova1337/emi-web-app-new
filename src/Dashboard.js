@@ -21,38 +21,69 @@ export default function Dashboard({ onNavigate, onLogout }) {
       <h2>🎉 Welcome to EMI Tracker Dashboard</h2>
       <p>➡️ Choose an option below:</p>
 
-      <div style={styles.card} onClick={() => onNavigate("add")}>
+      <div
+        style={styles.card}
+        onClick={() => onNavigate("add")}
+        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
         ➕ <strong>Add Plan</strong><br />
         <small>Create a new EMI plan.</small>
       </div>
 
-      <div style={styles.card} onClick={() => onNavigate("existing")}>
+      <div
+        style={styles.card}
+        onClick={() => onNavigate("existing")}
+        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
         📂 <strong>Existing Plans</strong><br />
         <small>Manage, mark paid, and track balances.</small>
       </div>
 
-      <div style={styles.card} onClick={() => onNavigate("profile")}>
+      <div
+        style={styles.card}
+        onClick={() => onNavigate("profile")}
+        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
         🙍 <strong>Profile</strong><br />
         <small>View or edit profile details.</small>
       </div>
 
-      <div style={styles.card} onClick={() => onNavigate("summary")}>
+      <div
+        style={styles.card}
+        onClick={() => onNavigate("summary")}
+        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
         📊 <strong>Summary</strong><br />
         <small>View EMI stats and pie chart.</small>
       </div>
 
-      <div style={styles.card} onClick={() => onNavigate("finished")}>
+      <div
+        style={styles.card}
+        onClick={() => onNavigate("finished")}
+        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
         ✅ <strong>Finished Plans</strong><br />
         <small>View closed EMI plans & download PDF logs</small>
       </div>
 
-	<div style={{ ...styles.card, backgroundColor: "#e6f7ff" }} onClick={() => onNavigate("monthsummary")}>
- 	 📆 <strong>Monthly EMI Summary</strong><br />
-	  <small>Month-wise EMI breakdown.</small>
-	</div>
+      <div
+        style={styles.card}
+        onClick={() => onNavigate("monthsummary")}
+        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
+        📆 <strong>Monthly EMI Summary</strong><br />
+        <small>Month-wise EMI breakdown.</small>
+      </div>
 
-
-      <button onClick={onLogout} style={styles.logoutBtn}>🚪 Logout</button>
+      <button onClick={onLogout} style={styles.logoutBtn}>
+        🚪 Logout
+      </button>
     </div>
   );
 }
@@ -64,13 +95,16 @@ const styles = {
   },
   card: {
     border: "1px solid #ccc",
-    borderRadius: "10px",
+    borderRadius: "12px",
     padding: "1.2rem",
     margin: "1rem auto",
-    backgroundColor: "#f5f5f5",
+    background: "linear-gradient(135deg, #a0e9fd, #a1f7c5)", // blue-green gradient
+    color: "#003333",
+    fontWeight: "500",
     cursor: "pointer",
     maxWidth: "400px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+    transition: "transform 0.2s ease-in-out",
   },
   logoutBtn: {
     marginTop: "2rem",
