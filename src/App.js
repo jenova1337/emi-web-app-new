@@ -11,49 +11,44 @@ const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [view, setView] = useState("dashboard");
 
-  /* ---------- check login once */
+  // 🔒 Check if user already logged in
   useEffect(() => {
     const user = localStorage.getItem("loggedInUser");
     if (user) setIsLoggedIn(true);
   }, []);
 
-  /* ---------- logout helper */
+  // 🔓 Handle logout
   const handleLogout = () => {
     localStorage.removeItem("loggedInUser");
     setIsLoggedIn(false);
     setView("dashboard");
   };
 
-  /* ---------- if not logged in, show login page */
+  // 🔑 Show login screen if not logged in
   if (!isLoggedIn) {
     return <Login onLogin={() => setIsLoggedIn(true)} />;
   }
 
-  /* ---------- router‑like view switch */
+  // 🔁 Render view based on user selection
   const renderView = () => {
     switch (view) {
       case "add":
         return <AddPlan goBack={() => setView("dashboard")} />;
-
       case "existing":
         return <ExistingPlans goBack={() => setView("dashboard")} />;
-
       case "profile":
         return (
           <>
             <Profile goBack={() => setView("dashboard")} />
             <button onClick={handleLogout} style={styles.logoutBtn}>
-             🚪Logout
+              🚪 Logout
             </button>
           </>
         );
-
       case "summary":
         return <SummaryDashboard goBack={() => setView("dashboard")} />;
-
-      case "finished": // ⚡ must be BEFORE default
+      case "finished":
         return <FinishedPlans goBack={() => setView("dashboard")} />;
-
       default:
         return (
           <Dashboard
@@ -67,7 +62,7 @@ const App = () => {
   return <div>{renderView()}</div>;
 };
 
-/* ---------- simple styles */
+// 🎨 Button styling
 const styles = {
   logoutBtn: {
     marginTop: "20px",
