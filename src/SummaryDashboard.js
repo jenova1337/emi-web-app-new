@@ -47,7 +47,7 @@ export default function SummaryDashboard({ goBack }) {
       const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
       const nextDate = new Date(base);
       nextDate.setMonth(nextDate.getMonth() + paidCount);
-      const isOver = paidCount >= plan.months;
+      const isOver = getPlanPaid(plan) >= plan.totalAmount;
       if (!isOver && (!earliest || nextDate < earliest)) {
         earliest = nextDate;
       }
@@ -104,7 +104,7 @@ export default function SummaryDashboard({ goBack }) {
           const paidCount = plan.payments?.filter((p) => p.type === "Fixed").length || 0;
           const nextDate = new Date(base);
           nextDate.setMonth(base.getMonth() + paidCount);
-          const isOver = paidCount >= plan.months;
+          const isOver = getPlanPaid(plan) >= plan.totalAmount;
 
           const planPieData = [
             { name: "Paid", value: getPlanPaid(plan) },
