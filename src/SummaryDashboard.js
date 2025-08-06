@@ -106,17 +106,29 @@ export default function SummaryDashboard({ goBack }) {
           nextDate.setMonth(base.getMonth() + paidCount);
           const isOver = getPlanPaid(plan) >= plan.totalAmount;
 
-          const planPieData = [
-            { name: "Paid", value: getPlanPaid(plan) },
-            { name: "Remaining", value: plan.totalAmount - getPlanPaid(plan) }
-          ];
+// 🆕 Calculate last paid date if EMI is over
+let lastPaidDate = "";
+if (isOver && plan.payments?.length > 0) {
+  const sorted = [...plan.payments].sort((a, b) => {
+    const [da, ma, ya] = a.date.split("/").map(Number);
+    const [db, mb, yb] = b.date.split("/").map(Number);
+    const d1 = new Date(ya, ma - 1, da);
+    const d2 = new Date(yb, mb - 1, db);
+    return d2 - d1; // descending
+  });
+  lastPaidDate = sorted[0]?.date || "";
+}
 
-          return (
-            <li key={plan.id}>
-              <strong>{plan.title}</strong>: {isOver
-                ? `✅ EMI Over on ${nextDate.toLocaleDateString("en-GB")}`
-                : `Next Due: ${nextDate.toLocaleDateString("en-GB")}`
-              }
+const planPieData = [
+  { name: "Paid", value: getPlanPaid(plan) },
+  { name: "Remaining", value: plan.totalAmount - getPlanPaid(plan) }
+];
+
+return (
+  <li key={plan.id}>
+    <strong>{plan.title}</strong>: {isOver
+      ? `✅ EMI Over on ${lastPaidDate}`
+      : `Next Due: ${nextDate.toLocaleDateString("en-GB")}`}
 
               <div style={{ width: "100%", height: 250 }}>
                 <ResponsiveContainer>
