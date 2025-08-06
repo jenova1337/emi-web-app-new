@@ -70,6 +70,15 @@ export default function Dashboard({ onNavigate, onLogout }) {
         ✅ <strong>Finished Plans</strong><br />
         <small>View closed EMI plans & download PDF logs</small>
       </div>
+          <div
+  style={styles.card}
+  onClick={() => onNavigate("monthly")}
+  onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.03)")}
+  onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+>
+  📅 <strong>Monthly EMI Summary</strong><br />
+  <small>View month-wise EMI chart and breakdown.</small>
+</div>
 
       <button onClick={onLogout} style={styles.logoutBtn}>
         🚪 Logout
