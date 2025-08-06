@@ -1,5 +1,8 @@
-// src/MonthWiseEmiSummary.jsimport React, { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import {
+  collection,
+  getDocs,
+} from 'firebase/firestore';
 import { db, auth } from './firebase';
 import {
   BarChart,
@@ -22,7 +25,9 @@ const MonthWiseEmiSummary = ({ goBack }) => {
     entries.forEach((entry) => {
       if (!entry.date || isNaN(Date.parse(entry.date))) return;
 
-      const date = new Date(entry.date);
+      const dateParts = entry.date.split('/');
+      if (dateParts.length !== 3) return;
+      const date = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
       const month = format(date, 'MMM yyyy');
 
       if (!map[month]) {
@@ -37,7 +42,6 @@ const MonthWiseEmiSummary = ({ goBack }) => {
       totalPaid: map[month],
     }));
 
-    // Sort by month
     result.sort((a, b) => {
       const aDate = parse(`01 ${a.month}`, 'dd MMM yyyy', new Date());
       const bDate = parse(`01 ${b.month}`, 'dd MMM yyyy', new Date());
@@ -53,7 +57,6 @@ const MonthWiseEmiSummary = ({ goBack }) => {
         const uid = auth.currentUser?.uid;
         if (!uid) return;
 
-        // ✅ Use correct Firestore path
         const plansSnapshot = await getDocs(collection(db, 'users', uid, 'plans'));
         const allPayments = [];
 
@@ -76,28 +79,23 @@ const MonthWiseEmiSummary = ({ goBack }) => {
     fetchEMIData();
   }, []);
 
-  if (loading) return <div style={{ padding: '1rem', fontSize: '1.2rem' }}>Loading Month-wise Summary...</div>;
+  if (loading) return <div style={{ padding: "1rem", fontSize: "18px" }}>Loading Month-wise Summary...</div>;
 
   return (
-    <div style={{ padding: '1rem' }}>
-      <button
-        onClick={goBack}
-        style={{
-          padding: '10px 20px',
-          marginBottom: '1rem',
-          backgroundColor: '#333',
-          color: 'white',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer',
-        }}
-      >
+    <div style={{ padding: "1rem" }}>
+      <button onClick={goBack} style={{
+        marginBottom: "1rem",
+        padding: "8px 16px",
+        backgroundColor: "#333",
+        color: "#fff",
+        border: "none",
+        borderRadius: "5px",
+        cursor: "pointer"
+      }}>
         🔙 Back to Dashboard
       </button>
 
-      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-        📅 Monthly EMI Summary
-      </h2>
+      <h2 style={{ fontSize: "24px", marginBottom: "1rem" }}>📅 Monthly EMI Summary</h2>
 
       {monthlyData.length === 0 ? (
         <p>No EMI data available.</p>
@@ -113,22 +111,20 @@ const MonthWiseEmiSummary = ({ goBack }) => {
             </BarChart>
           </ResponsiveContainer>
 
-          <div style={{ marginTop: '2rem' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-              📊 Detailed Breakdown
-            </h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ marginTop: "2rem" }}>
+            <h3 style={{ fontSize: "20px", marginBottom: "10px" }}>📊 Detailed Breakdown</h3>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ backgroundColor: '#f0f0f0' }}>
-                  <th style={cellStyle}>Month</th>
-                  <th style={cellStyle}>Total EMI Paid</th>
+                <tr style={{ backgroundColor: "#f0f0f0" }}>
+                  <th style={thStyle}>Month</th>
+                  <th style={thStyle}>Total EMI Paid</th>
                 </tr>
               </thead>
               <tbody>
                 {monthlyData.map((item, idx) => (
                   <tr key={idx}>
-                    <td style={cellStyle}>{item.month}</td>
-                    <td style={cellStyle}>₹{item.totalPaid.toFixed(2)}</td>
+                    <td style={tdStyle}>{item.month}</td>
+                    <td style={tdStyle}>₹{item.totalPaid.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -140,10 +136,16 @@ const MonthWiseEmiSummary = ({ goBack }) => {
   );
 };
 
-const cellStyle = {
-  border: '1px solid #ccc',
-  padding: '8px',
-  textAlign: 'center',
+const thStyle = {
+  border: "1px solid #ccc",
+  padding: "10px",
+  textAlign: "left",
+  fontWeight: "bold"
+};
+
+const tdStyle = {
+  border: "1px solid #ccc",
+  padding: "10px"
 };
 
 export default MonthWiseEmiSummary;
