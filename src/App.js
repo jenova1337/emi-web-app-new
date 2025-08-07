@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+    import React, { useState, useEffect } from "react";
 import Dashboard from "./Dashboard";
 import AddPlan from "./AddPlan";
 import ExistingPlans from "./ExistingPlans";
@@ -8,6 +8,8 @@ import SummaryDashboard from "./SummaryDashboard";
 import MonthWiseEmiSummary from "./MonthWiseEmiSummary";
 import FinishedPlans from "./FinishedPlans";
 
+// ✅ Added for Push Notifications
+import { requestForToken, onMessageListener } from "./fcm";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -17,6 +19,22 @@ const App = () => {
     const user = localStorage.getItem("loggedInUser");
     if (user) setIsLoggedIn(true);
   }, []);
+
+  // ✅ Push Notification token request + listener
+  useEffect(() => {
+    if (isLoggedIn) {
+      requestForToken().then((token) => {
+        if (token) {
+          console.log("🔥 FCM Token received:", token);
+        }
+      });
+
+      onMessageListener().then((payload) => {
+        const { title, body } = payload.notification;
+        alert(`🔔 ${title}\n${body}`);
+      });
+    }
+  }, [isLoggedIn]);
 
   const handleLogout = () => {
     localStorage.removeItem("loggedInUser");
@@ -29,30 +47,30 @@ const App = () => {
   }
 
   const renderView = () => {
-  switch (view) {
-    case "add":
-      return <AddPlan goBack={() => setView("dashboard")} />;
-    case "existing":
-      return <ExistingPlans goBack={() => setView("dashboard")} />;
-    case "profile":
-      return (
-        <>
-          <Profile goBack={() => setView("dashboard")} />
-          <button onClick={handleLogout} style={styles.logoutBtn}>
-            🚪 Logout
-          </button>
-        </>
-      );
-    case "summary":
-      return <SummaryDashboard goBack={() => setView("dashboard")} />;
-    case "finished":
-      return <FinishedPlans goBack={() => setView("dashboard")} />;
-    case "monthly":
-      return <MonthWiseEmiSummary goBack={() => setView("dashboard")} />;
-    default:
-      return <Dashboard onNavigate={setView} onLogout={handleLogout} />;
-  }
-};
+    switch (view) {
+      case "add":
+        return <AddPlan goBack={() => setView("dashboard")} />;
+      case "existing":
+        return <ExistingPlans goBack={() => setView("dashboard")} />;
+      case "profile":
+        return (
+          <>
+            <Profile goBack={() => setView("dashboard")} />
+            <button onClick={handleLogout} style={styles.logoutBtn}>
+              🚪 Logout
+            </button>
+          </>
+        );
+      case "summary":
+        return <SummaryDashboard goBack={() => setView("dashboard")} />;
+      case "finished":
+        return <FinishedPlans goBack={() => setView("dashboard")} />;
+      case "monthly":
+        return <MonthWiseEmiSummary goBack={() => setView("dashboard")} />;
+      default:
+        return <Dashboard onNavigate={setView} onLogout={handleLogout} />;
+    }
+  };
 
   return <div>{renderView()}</div>;
 };
